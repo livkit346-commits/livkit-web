@@ -1,0 +1,328 @@
+{% extends 'mobile_base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    /* Dark Theme Base */
+    .settings-container {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        height: 100dvh;
+        background-color: #000;
+        color: white;
+        overflow-y: auto;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .settings-container::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Standard Top AppBar */
+    .top-appbar {
+        display: flex;
+        align-items: center;
+        padding: env(safe-area-inset-top, 15px) 15px 15px;
+        background-color: #000;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+
+    .back-btn {
+        color: white;
+        font-size: 28px;
+        cursor: pointer;
+        padding-right: 15px;
+    }
+
+    .appbar-title {
+        font-size: 1.2rem;
+        font-weight: 500;
+        color: white;
+    }
+
+    /* Profile Header in Settings */
+    .settings-profile-header {
+        display: flex;
+        align-items: center;
+        padding: 10px 20px;
+    }
+
+    .settings-avatar {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        background-color: rgba(255, 255, 255, 0.12);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        object-fit: cover;
+    }
+
+    .settings-avatar .material-symbols-outlined {
+        font-size: 34px;
+        color: white;
+    }
+
+    .settings-info {
+        margin-left: 15px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .settings-display-name {
+        font-size: 1.15rem;
+        font-weight: bold;
+        color: white;
+        margin-bottom: 4px;
+    }
+
+    .settings-username {
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.54);
+    }
+
+    /* Options Sections */
+    .settings-section-wrapper {
+        padding: 5px 20px 25px;
+    }
+
+    .section-title {
+        font-size: 0.75rem;
+        font-weight: bold;
+        color: rgba(255, 255, 255, 0.54);
+        margin-bottom: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .section-card {
+        background-color: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    /* Option Items */
+    .option-item {
+        display: flex;
+        align-items: center;
+        padding: 14px 16px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .option-item:active {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .option-item .material-symbols-outlined:first-child {
+        margin-right: 15px;
+        font-size: 22px;
+    }
+
+    .option-label {
+        flex: 1;
+        font-size: 0.95rem;
+    }
+
+    .option-chevron {
+        color: rgba(255, 255, 255, 0.38);
+        font-size: 22px;
+    }
+
+    /* Danger Item (Log Out) */
+    .option-item.danger-item .material-symbols-outlined:first-child,
+    .option-item.danger-item .option-label {
+        color: #F44336;
+        /* Red Accent */
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="settings-container">
+    <!-- Top App Bar -->
+    <div class="top-appbar">
+        <span class="material-symbols-outlined back-btn" onclick="window.history.back()">arrow_back</span>
+        <span class="appbar-title">Settings</span>
+    </div>
+
+    <!-- Profile Header -->
+    <div class="settings-profile-header">
+        <div class="settings-avatar">
+            <span class="material-symbols-outlined">person</span>
+        </div>
+        <div class="settings-info">
+            <span class="settings-display-name">{{ user.username|default:"No name" }}</span>
+            <span class="settings-username">{% if user.username %}@{{ user.username }}{% endif %}</span>
+        </div>
+    </div>
+
+    <div style="height: 25px;"></div>
+
+    <!-- Account Section -->
+    <div class="settings-section-wrapper">
+        <div class="section-title">Account</div>
+        <div class="section-card">
+            <a href="{% url 'userprofile' %}" class="option-item">
+                <span class="material-symbols-outlined">person</span>
+                <span class="option-label">Edit Profile</span>
+                <span class="material-symbols-outlined option-chevron">chevron_right</span>
+            </a>
+            <a href="{% url 'userprivacy' %}" class="option-item">
+                <span class="material-symbols-outlined">lock</span>
+                <span class="option-label">Privacy</span>
+                <span class="material-symbols-outlined option-chevron">chevron_right</span>
+            </a>
+            <a href="{% url 'usersecurity' %}" class="option-item">
+                <span class="material-symbols-outlined">security</span>
+                <span class="option-label">Security</span>
+                <span class="material-symbols-outlined option-chevron">chevron_right</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Live & Monetization Section -->
+    <div class="settings-section-wrapper">
+        <div class="section-title">Live & Monetization</div>
+        <div class="section-card">
+            <a href="#" onclick="alert('Coming Soon!')" class="option-item">
+                <span class="material-symbols-outlined">live_tv</span>
+                <span class="option-label">My Live Streams</span>
+                <span class="material-symbols-outlined option-chevron">chevron_right</span>
+            </a>
+            <a href="{% url 'wallet' %}" class="option-item">
+                <span class="material-symbols-outlined">account_balance_wallet</span>
+                <span class="option-label">Wallet & Earnings</span>
+                <span class="material-symbols-outlined option-chevron">chevron_right</span>
+            </a>
+            <a href="#" onclick="alert('Subscriptions Coming Soon!')" class="option-item">
+                <span class="material-symbols-outlined">subscriptions</span>
+                <span class="option-label">Subscriptions</span>
+                <span class="material-symbols-outlined option-chevron">chevron_right</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Referral Code Section -->
+    <div class="settings-section-wrapper">
+        <div class="section-title">Referral</div>
+        <div class="section-card" style="padding: 16px;">
+            {% if user.referral_code %}
+            <p style="font-size: 0.85rem; color: rgba(255,255,255,0.54); margin: 0 0 10px;">Your referral code</p>
+            <div style="display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.07); border-radius: 10px; padding: 12px 14px; margin-bottom: 14px;">
+                <span id="referral-code-display" style="font-size: 1.3rem; font-weight: bold; letter-spacing: 4px; color: #ff0050; flex: 1;">{{ user.referral_code }}</span>
+                <button onclick="copyReferralCode()" id="copy-referral-btn" style="background: none; border: 1px solid rgba(255,255,255,0.3); color: white; border-radius: 8px; padding: 6px 12px; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                    <span class="material-symbols-outlined" style="font-size: 16px;">content_copy</span> Copy
+                </button>
+            </div>
+            <p style="font-size: 0.8rem; color: rgba(255,255,255,0.4); margin: 0 0 12px;">Share this code. You earn USD rewards when friends subscribe! 🎉</p>
+            {% else %}
+            <p style="font-size: 0.85rem; color: rgba(255,255,255,0.54); margin: 0 0 14px;">You haven't generated a referral code yet.</p>
+            {% endif %}
+            <button onclick="generateReferralCode()" id="gen-referral-btn" style="width: 100%; background: linear-gradient(135deg, #ff0050, #d40042); color: white; border: none; border-radius: 10px; padding: 12px; font-weight: bold; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <span class="material-symbols-outlined" style="font-size: 18px;">share</span>
+                {% if user.referral_code %}Regenerate Code{% else %}Generate Referral Code{% endif %}
+            </button>
+            {% if user.total_referrals > 0 %}
+            <p style="text-align: center; margin: 12px 0 0; font-size: 0.85rem; color: rgba(255,255,255,0.5);">
+                🏆 You've referred <strong style="color: white;">{{ user.total_referrals }}</strong> user{{ user.total_referrals|pluralize }}!
+            </p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Settings Section -->
+    <div class="settings-section-wrapper">
+        <div class="section-title">Settings</div>
+        <div class="section-card">
+            <a href="#" onclick="alert('Coming Soon!')" class="option-item">
+                <span class="material-symbols-outlined">notifications</span>
+                <span class="option-label">Notifications</span>
+                <span class="material-symbols-outlined option-chevron">chevron_right</span>
+            </a>
+            <a href="#" onclick="alert('Coming Soon!')" class="option-item">
+                <span class="material-symbols-outlined">language</span>
+                <span class="option-label">Language</span>
+                <span class="material-symbols-outlined option-chevron">chevron_right</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Support Section -->
+    <div class="settings-section-wrapper" style="margin-bottom: 40px;">
+        <div class="section-title">Support</div>
+        <div class="section-card">
+            <a href="#" onclick="alert('Coming Soon!')" class="option-item">
+                <span class="material-symbols-outlined">help</span>
+                <span class="option-label">Help Center</span>
+                <span class="material-symbols-outlined option-chevron">chevron_right</span>
+            </a>
+            <a href="#" onclick="alert('About Page Coming Soon!')" class="option-item">
+                <span class="material-symbols-outlined">info</span>
+                <span class="option-label">About</span>
+                <span class="material-symbols-outlined option-chevron">chevron_right</span>
+            </a>
+            <a href="{% url 'logout' %}" class="option-item danger-item">
+                <span class="material-symbols-outlined">logout</span>
+                <span class="option-label">Log Out</span>
+                <span class="material-symbols-outlined option-chevron">chevron_right</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    const csrfToken = document.cookie.split('; ').find(r => r.startsWith('csrftoken='))?.split('=')[1] || '';
+
+    async function generateReferralCode() {
+        const btn = document.getElementById('gen-referral-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;animation:spin 1s linear infinite">refresh</span> Generating...';
+
+        try {
+            const res = await fetch('/api/referral/generate/', {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' }
+            });
+            const data = await res.json();
+            if (data.referral_code) {
+                // Refresh page to show new code
+                location.reload();
+            } else {
+                alert(data.error || 'Failed to generate code.');
+                btn.disabled = false;
+                btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px">share</span> Generate Referral Code';
+            }
+        } catch (e) {
+            alert('Network error. Please try again.');
+            btn.disabled = false;
+        }
+    }
+
+    function copyReferralCode() {
+        const code = document.getElementById('referral-code-display')?.innerText;
+        if (!code) return;
+        navigator.clipboard.writeText(code).then(() => {
+            const btn = document.getElementById('copy-referral-btn');
+            btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px">check</span> Copied!';
+            btn.style.borderColor = '#4CAF50';
+            btn.style.color = '#4CAF50';
+            setTimeout(() => {
+                btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px">content_copy</span> Copy';
+                btn.style.borderColor = ''; btn.style.color = '';
+            }, 2000);
+        });
+    }
+</script>
+<style>
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+</style>
+{% endblock %}

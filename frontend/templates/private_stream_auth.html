@@ -1,0 +1,177 @@
+{% extends 'mobile_base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .auth-container {
+        min-height: calc(100dvh - 75px);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        background-color: #000;
+        color: white;
+        text-align: center;
+    }
+    
+    .auth-card {
+        background-color: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 30px 20px;
+        width: 100%;
+        max-width: 400px;
+    }
+
+    .auth-icon {
+        font-size: 64px;
+        color: #ff0050;
+        margin-bottom: 20px;
+    }
+
+    .auth-title {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+
+    .auth-desc {
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 0.9rem;
+        margin-bottom: 30px;
+    }
+
+    .form-control {
+        background-color: rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+        border-radius: 12px;
+        padding: 12px 15px;
+        width: 100%;
+        margin-bottom: 15px;
+    }
+
+    .form-control:focus {
+        background-color: rgba(0, 0, 0, 0.8);
+        border-color: #ff0050;
+        outline: none;
+        box-shadow: none;
+    }
+
+    .btn-gradient {
+        background: linear-gradient(135deg, #ff0050, #d40042);
+        color: white;
+        border: none;
+        padding: 14px;
+        border-radius: 12px;
+        width: 100%;
+        font-weight: bold;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+
+    .btn-gradient:active {
+        transform: scale(0.95);
+    }
+    
+    .btn-outline {
+        background: transparent;
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        padding: 14px;
+        border-radius: 12px;
+        width: 100%;
+        font-weight: bold;
+        font-size: 1rem;
+        cursor: pointer;
+        margin-top: 15px;
+    }
+
+    .alert-error {
+        background-color: rgba(255, 0, 80, 0.1);
+        color: #ff0050;
+        border-left: 3px solid #ff0050;
+        padding: 10px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-size: 0.85rem;
+        text-align: left;
+    }
+
+    /* Spinner */
+    .spinner {
+        width: 50px;
+        height: 50px;
+        border: 5px solid rgba(255, 0, 80, 0.2);
+        border-top-color: #ff0050;
+        border-radius: 50%;
+        animation: spin 1s infinite linear;
+        margin: 0 auto 20px;
+    }
+
+    @keyframes spin {
+        100% { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        
+        {% if status == "password_required" %}
+            <span class="material-symbols-outlined auth-icon">lock</span>
+            <h1 class="auth-title">Private Stream</h1>
+            <p class="auth-desc">This live stream is protected by the host. Please enter the password to continue.</p>
+            
+            {% if error %}
+            <div class="alert-error">
+                <span class="material-symbols-outlined" style="font-size: 16px; margin-right: 5px; vertical-align: text-bottom;">error</span>
+                {{ error }}
+            </div>
+            {% endif %}
+
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="submit_password">
+                <input type="password" name="password" class="form-control" placeholder="Enter Password" required>
+                <button type="submit" class="btn-gradient">Unlock Stream</button>
+            </form>
+            <button class="btn-outline" onclick="window.history.back()">Go Back</button>
+
+        {% elif status == "pending_approval" %}
+            <div class="spinner"></div>
+            <h1 class="auth-title">Awaiting Approval</h1>
+            <p class="auth-desc">Your request has been sent to the host. You will automatically join when approved.</p>
+            <button class="btn-outline" id="cancel-btn" data-href="{% url 'live' %}">Cancel Request</button>
+            
+            <script>
+                // Auto-refresh the page every 5 seconds to check approval status
+                setTimeout(() => {
+                    location.reload();
+                }, 5000);
+            </script>
+
+        {% elif status == "rejected" %}
+            <span class="material-symbols-outlined auth-icon" style="color: #f44336;">block</span>
+            <h1 class="auth-title">Access Denied</h1>
+            <p class="auth-desc">The host declined your request to join this private stream.</p>
+            <button class="btn-gradient" id="return-btn" data-href="{% url 'live' %}">Return to Feed</button>
+
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.querySelectorAll('[data-href]').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            window.location.href = this.dataset.href;
+        });
+    });
+</script>
+{% endblock %}

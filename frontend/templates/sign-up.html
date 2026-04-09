@@ -1,0 +1,285 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Sign Up - LivKit</title>
+   <!-- Bootstrap CSS -->
+   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+   <!-- FontAwesome for Icons -->
+   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+   <style>
+      body,
+      html {
+         height: 100%;
+         margin: 0;
+         font-family: 'Inter', sans-serif;
+         background: linear-gradient(135deg, #0F2027 0%, #203A43 50%, #2C5364 100%);
+         display: flex;
+         align-items: center;
+         justify-content: center;
+      }
+
+      .login-container {
+         width: 100%;
+         max-width: 450px;
+         padding: 2rem;
+         animation: slideUpFade 1s cubic-bezier(0.165, 0.84, 0.44, 1);
+      }
+
+      @keyframes slideUpFade {
+         0% {
+            opacity: 0;
+            transform: translateY(30px);
+         }
+
+         100% {
+            opacity: 1;
+            transform: translateY(0);
+         }
+      }
+
+      .title {
+         font-size: 2rem;
+         font-weight: 700;
+         color: #ffffff;
+         margin-bottom: 0.5rem;
+      }
+
+      .subtitle {
+         color: rgba(255, 255, 255, 0.7);
+         margin-bottom: 2.5rem;
+      }
+
+      .form-control,
+      .input-group-text {
+         background-color: rgba(255, 255, 255, 0.1);
+         border: none;
+         color: #ffffff;
+         padding: 1rem 1.25rem;
+      }
+
+      .form-control {
+         border-radius: 14px;
+         margin-bottom: 1.25rem;
+      }
+
+      /* Adjust input group to look unified */
+      .input-group .form-control {
+         border-top-right-radius: 0;
+         border-bottom-right-radius: 0;
+         margin-bottom: 0;
+      }
+
+      .input-group .input-group-text {
+         border-top-right-radius: 14px;
+         border-bottom-right-radius: 14px;
+         cursor: pointer;
+         color: rgba(255, 255, 255, 0.7);
+         transition: color 0.2s;
+      }
+
+      .input-group .input-group-text:hover {
+         color: #ffffff;
+      }
+
+      .form-control:focus {
+         background-color: rgba(255, 255, 255, 0.15);
+         color: #ffffff;
+         box-shadow: none;
+      }
+
+      .input-group:focus-within .input-group-text,
+      .input-group:focus-within .form-control {
+         background-color: rgba(255, 255, 255, 0.15);
+      }
+
+      .form-control::placeholder {
+         color: rgba(255, 255, 255, 0.54);
+      }
+
+      .btn-primary {
+         background-color: #7C4DFF;
+         border: none;
+         border-radius: 14px;
+         padding: 1rem;
+         font-weight: 700;
+         letter-spacing: 1px;
+         width: 100%;
+         transition: background-color 0.3s ease;
+         margin-top: 1rem;
+      }
+
+      .btn-primary:hover {
+         background-color: #651FFF;
+      }
+
+      .signup-link {
+         color: rgba(255, 255, 255, 0.7);
+         text-decoration: none;
+         text-align: center;
+         display: block;
+         margin-top: 1.5rem;
+      }
+
+      .signup-link:hover {
+         color: #ffffff;
+      }
+
+      .alert-danger {
+         background-color: rgba(220, 53, 69, 0.2);
+         color: #ff6b6b;
+         border: 1px solid rgba(220, 53, 69, 0.5);
+         border-radius: 14px;
+      }
+   </style>
+</head>
+
+<body>
+
+   <div class="login-container">
+      <h1 class="title">Create Account</h1>
+      <p class="subtitle">Join and start live streaming</p>
+
+      {% if error %}
+      <div class="alert alert-danger text-center" role="alert">
+         {{ error }}
+      </div>
+      {% endif %}
+
+      <form method="post">
+         {% csrf_token %}
+
+         <input name="username" placeholder="Username" autocomplete="name" required type="text" class="form-control" />
+         <input name="email" placeholder="Email" autocomplete="email" required type="email" class="form-control" />
+
+         <div class="input-group mb-4">
+            <input name="password" id="passwordField1" placeholder="Password" required type="password"
+               class="form-control" />
+            <span class="input-group-text" onclick="togglePasswordVisibility('passwordField1', this)">
+               <i class="fa-regular fa-eye"></i>
+            </span>
+         </div>
+
+         <div class="input-group mb-4">
+            <input name="password_confirm" id="passwordField2" placeholder="Repeat Password" required type="password"
+               class="form-control" />
+            <span class="input-group-text" onclick="togglePasswordVisibility('passwordField2', this)">
+               <i class="fa-regular fa-eye"></i>
+            </span>
+         </div>
+
+         <input name="referral_code" placeholder="Referral Code (optional)" type="text"
+            class="form-control" style="letter-spacing: 2px; text-transform: uppercase;"
+            oninput="this.value = this.value.toUpperCase()" />
+
+         <button type="submit" class="btn btn-primary">CREATE ACCOUNT</button>
+      </form>
+
+      <a href="{% url 'signin' %}" class="signup-link">Already have an account? Login</a>
+   </div>
+
+   <script>
+      function togglePasswordVisibility(fieldId, toggleElem) {
+         const passwordField = document.getElementById(fieldId);
+         const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+         passwordField.setAttribute('type', type);
+
+         const icon = toggleElem.querySelector('i');
+         icon.classList.toggle('fa-eye');
+         icon.classList.toggle('fa-eye-slash');
+      }
+   </script>
+
+   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+   <script>
+      const SUPABASE_URL = "{{ SUPABASE_URL|default:'' }}";
+      const SUPABASE_ANON_KEY = "{{ SUPABASE_ANON_KEY|default:'' }}";
+
+      if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+         console.error("Supabase configuration missing!");
+      }
+
+      const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+      document.querySelector('form').addEventListener('submit', async (e) => {
+         if (!e.target.email) return;
+
+         e.preventDefault();
+         const username = e.target.username.value;
+         const email = e.target.email.value;
+         const password = e.target.password.value;
+         const confirm = e.target.password_confirm.value;
+
+         const existingError = document.getElementById('supabase-auth-error');
+         if (existingError) existingError.remove();
+
+         const submitBtn = e.target.querySelector('button[type="submit"]');
+
+         function showError(msg) {
+            const errorDiv = document.createElement('div');
+            errorDiv.id = 'supabase-auth-error';
+            errorDiv.className = 'alert alert-danger text-center';
+            errorDiv.innerText = msg;
+            document.querySelector('.subtitle').after(errorDiv);
+            if (submitBtn) {
+               submitBtn.disabled = false;
+               submitBtn.innerHTML = 'CREATE ACCOUNT';
+            }
+         }
+
+         if (password !== confirm) {
+            showError("Passwords do not match");
+            return;
+         }
+
+         submitBtn.disabled = true;
+         submitBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> CREATING ACCOUNT...';
+
+         try {
+            const { data, error } = await supabase.auth.signUp({
+               email: email,
+               password: password,
+               options: {
+                  data: {
+                     username: username
+                  }
+               }
+            });
+
+            if (error) throw error;
+
+            const session = data.session;
+            // Note: If email confirmation is enabled, session might be null here.
+            // But for this migration, we assume immediate login or handle accordingly.
+            const accessToken = session ? session.access_token : null;
+
+            if (!accessToken) {
+               showError("Please check your email to confirm your account.");
+               return;
+            }
+
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '';
+
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+            form.innerHTML = `<input type="hidden" name="csrfmiddlewaretoken" value="${csrfToken}">
+                              <input type="hidden" name="id_token" value="${accessToken}">
+                              <input type="hidden" name="username" value="${username}">
+                              <input type="hidden" name="referral_code" value="${(e.target.referral_code?.value || '').toUpperCase()}">`;
+
+            document.body.appendChild(form);
+            form.submit();
+         } catch (error) {
+            console.error("Supabase Sign Up Error", error);
+            showError(error.message);
+         }
+      });
+   </script>
+</body>
+
+</html>

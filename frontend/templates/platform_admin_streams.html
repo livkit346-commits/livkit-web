@@ -1,0 +1,114 @@
+{% extends 'platform_admin_base.html' %}
+{% load static %}
+
+{% block title %}Stream Monitor | Admin{% endblock %}
+{% block header_title %}Live Streams{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4 align-items-center">
+        <div class="col-md-6">
+            <h4 class="mb-0">Active Streams Monitor</h4>
+            <p class="text-white-50">Overview of all public and private broadcasts.</p>
+        </div>
+        <div class="col-md-6 text-md-end">
+            <form method="GET" class="d-flex gap-2 justify-content-md-end">
+                <input type="text" name="q" class="form-control bg-dark text-white border-secondary" placeholder="Search streamer..." value="{{ query }}" style="max-width: 250px;">
+                <button type="submit" class="btn btn-outline-light">Filter</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-dark table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Stream ID</th>
+                    <th>Host</th>
+                    <th>Status</th>
+                    <th>Privacy</th>
+                    <th>Viewers</th>
+                    <th>Started At</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stream in streams %}
+                <tr>
+                    <td><small class="text-white-50">{{ stream.id|stringformat:"s"|slice:":8" }}...</small></td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            {% if stream.streamer.profile.avatar %}
+                                <img src="{{ stream.streamer.profile.avatar.url }}" alt="avatar" class="rounded-circle" style="width:30px;height:30px;object-fit:cover;">
+                            {% else %}
+                                <div class="rounded-circle bg-secondary d-flex justify-content-center align-items-center" style="width:30px;height:30px;">
+                                    <span class="material-symbols-outlined text-white" style="font-size:16px;">person</span>
+                                </div>
+                            {% endif %}
+                            <span class="fw-bold">{{ stream.streamer.username }}</span>
+                        </div>
+                    </td>
+                    <td><span class="badge bg-success">LIVE</span></td>
+                    <td>
+                        {% if stream.is_private %}
+                            <span class="badge bg-warning text-dark"><span class="material-symbols-outlined pe-1" style="font-size: 14px; vertical-align: middle;">lock</span>Private</span>
+                        {% else %}
+                            <span class="badge bg-info text-dark">Public</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ stream.viewer_count }}</td>
+                    <td>{{ stream.started_at|date:"M d, H:i" }}</td>
+                    <td>
+                        <button class="btn btn-sm btn-danger d-flex align-items-center gap-1" onclick="terminateStream('{{ stream.id }}')">
+                            <span class="material-symbols-outlined" style="font-size: 16px;">power_settings_new</span>
+                            End
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center py-4 text-white-50">No active streams found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function terminateStream(streamId) {
+        if (!confirm("Are you sure you want to FORCE END this stream? The host and viewers will be disconnected immediately.")) {
+            return;
+        }
+        
+        const csrfToken = document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1] || '';
+        const formData = new URLSearchParams();
+        formData.append('stream_id', streamId);
+
+        fetch("{% url 'platform_admin_end_stream' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': csrfToken
+            },
+            body: formData.toString()
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert("Stream terminated successfully.");
+                location.reload();
+            } else {
+                alert(data.error || "Failed to terminate stream.");
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Network error.");
+        });
+    }
+</script>
+{% endblock %}

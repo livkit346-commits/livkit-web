@@ -1,0 +1,661 @@
+{% extends 'mobile_base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .profile-container {
+        padding-bottom: 20px;
+        overflow-y: auto;
+        height: 100%;
+        scrollbar-width: none;
+        /* Firefox */
+    }
+
+    .profile-container::-webkit-scrollbar {
+        display: none;
+        /* Chrome */
+    }
+
+    .top-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 20px;
+    }
+
+    .top-bar-title {
+        font-weight: 600;
+        font-size: 1.1rem;
+        color: white;
+    }
+
+    .top-bar-icons {
+        display: flex;
+        gap: 15px;
+    }
+
+    .top-bar-icons .material-symbols-outlined {
+        font-size: 1.2rem;
+        cursor: pointer;
+        color: white;
+    }
+
+    /* X-Style Banner */
+    .profile-banner {
+        width: 100%;
+        height: 120px;
+        background-color: #333;
+        background-image: url('https://picsum.photos/seed/banner/800/300');
+        background-size: cover;
+        background-position: center;
+    }
+
+    .profile-info-section {
+        padding: 0 15px;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .profile-avatar-wrapper {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        width: 100%;
+        margin-top: -40px;
+        margin-bottom: 15px;
+    }
+
+    .profile-avatar {
+        width: 80px;
+        height: 80px;
+        background-color: #000;
+        border: 4px solid #000;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        object-fit: cover;
+    }
+
+    .edit-profile-btn {
+        background-color: transparent;
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        border-radius: 20px;
+        padding: 6px 16px;
+        font-weight: bold;
+        font-size: 0.9rem;
+        cursor: pointer;
+        margin-bottom: 10px;
+    }
+
+    .profile-avatar .material-symbols-outlined {
+        font-size: 40px;
+        color: white;
+    }
+
+    .display-name {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 5px;
+        color: white;
+    }
+
+    .username-handle {
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.54);
+        margin-bottom: 20px;
+    }
+
+    .stats-row {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .stat-item {
+        display: flex;
+        flex-direction: row;
+        align-items: baseline;
+        gap: 5px;
+    }
+
+    .stat-count {
+        font-size: 1rem;
+        font-weight: bold;
+        color: white;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.54);
+    }
+
+    .stats-divider {
+        display: none;
+    }
+
+    .bio-text {
+        text-align: left;
+        font-size: 0.95rem;
+        color: white;
+        padding: 0;
+        margin-bottom: 15px;
+    }
+
+    .tabs-header {
+        display: flex;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+        position: sticky;
+        top: 0;
+        background-color: black;
+        z-index: 10;
+    }
+
+    .tab-item {
+        flex: 1;
+        text-align: center;
+        padding: 15px 0;
+        color: rgba(255, 255, 255, 0.38);
+        cursor: pointer;
+        position: relative;
+    }
+
+    .tab-item.active {
+        color: white;
+    }
+
+    .tab-item.active::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background-color: white;
+    }
+
+    /* Quick Actions Row */
+    .profile-quick-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+        width: 100%;
+        margin-bottom: 20px;
+    }
+
+    .action-pill {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        background-color: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: white;
+        padding: 10px;
+        border-radius: 12px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    /* Tab Content Area */
+    .tab-content {
+        padding: 5px;
+    }
+
+    /* List View for History */
+    .list-view {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 10px 15px;
+    }
+
+    .history-item {
+        display: flex;
+        align-items: center;
+        background-color: #1a1a1a;
+        padding: 15px;
+        border-radius: 12px;
+    }
+
+    .history-item .material-symbols-outlined {
+        color: #F44336;
+        /* Red accent */
+        margin-right: 15px;
+        font-size: 24px;
+    }
+
+    .history-text {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .history-title {
+        color: white;
+        font-weight: 500;
+        font-size: 1rem;
+    }
+
+    .history-date {
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 0.8rem;
+        margin-top: 4px;
+    }
+
+    /* Quick Actions Row */
+    .profile-quick-actions {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        width: 100%;
+    }
+
+    .action-pill {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background-color: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+        text-decoration: none;
+        transition: background-color 0.2s, transform 0.1s;
+    }
+
+    .action-pill:active {
+        background-color: rgba(255, 255, 255, 0.15);
+        transform: scale(0.96);
+    }
+
+    .action-pill .material-symbols-outlined {
+        font-size: 18px;
+    }
+
+    /* Override Bootstrap focus state for dark theme inputs */
+    .form-control:focus {
+        background-color: transparent !important;
+        color: white !important;
+        box-shadow: none !important;
+        border-color: rgba(255, 255, 255, 0.5) !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <div class="top-bar">
+        <div style="width: 40px;"></div> <!-- spacer -->
+        <span class="top-bar-title">{{ user.username }}</span>
+        <div class="top-bar-icons">
+            <span class="material-symbols-outlined" style="color: #ffb300;">account_balance_wallet</span>
+            <a href="{% url 'settings' %}" style="text-decoration: none;">
+                <span class="material-symbols-outlined">settings</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- X-Style Banner -->
+    <div class="profile-banner" style="background-image: url('{% if user.profile.banner_image %}{{ user.profile.banner_image.url }}{% else %}https://picsum.photos/seed/banner/800/300{% endif %}');"></div>
+
+    <div class="profile-info-section">
+        <div class="profile-avatar-wrapper">
+            <div class="profile-avatar" style="overflow: hidden;">
+                <img id="main-avatar-img" src="{% if user.profile.avatar %}{{ user.profile.avatar.url }}{% else %}https://ui-avatars.com/api/?name={{ user.username }}&background=random{% endif %}" style="width:100%; height:100%; object-fit:cover;">
+            </div>
+            <button class="edit-profile-btn" data-bs-toggle="modal" data-bs-target="#editProfileModal">Edit profile</button>
+        </div>
+
+        <div class="display-name" id="main-display-name">{% if user.profile.display_name %}{{ user.profile.display_name }}{% else %}{{ user.username }}{% endif %}</div>
+        <div class="username-handle">@{{ user.username }}</div>
+
+        <div class="bio-text" id="main-bio-text">
+            {% if user.profile.bio %}{{ user.profile.bio }}{% else %}No bio yet{% endif %}
+        </div>
+
+        <div class="stats-row">
+            <div class="stat-item" data-bs-toggle="modal" data-bs-target="#followingModal" style="cursor: pointer;">
+                <span class="stat-count">{{ following_count }}</span>
+                <span class="stat-label">Following</span>
+            </div>
+            <div class="stat-item" data-bs-toggle="modal" data-bs-target="#followersModal" style="cursor: pointer;">
+                <span class="stat-count">{{ followers_count }}</span>
+                <span class="stat-label">Followers</span>
+            </div>
+            <div class="stat-item" data-bs-toggle="modal" data-bs-target="#bookedModal" style="cursor: pointer;">
+                <span class="stat-count">{{ booked_count }}</span>
+                <span class="stat-label">Booked</span>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="profile-quick-actions">
+            <div class="action-pill" id="copy-profile-btn" onclick="copyProfileLink()">
+                <span class="material-symbols-outlined">content_copy</span>
+                <span>Copy Profile Link</span>
+            </div>
+            <div class="action-pill" onclick="document.querySelector('.tab-item:nth-child(1)').click()">
+                <span class="material-symbols-outlined">history</span>
+                <span>History</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONNECTION MODALS -->
+    <!-- Following Modal -->
+    <div class="modal fade" id="followingModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
+            <div class="modal-content bg-dark text-white border-0 shadow-lg" style="border-radius: 20px;">
+                <div class="modal-header border-bottom border-white border-opacity-10">
+                    <h5 class="modal-title fw-bold">Following</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0" style="max-height: 70vh; overflow-y: auto;">
+                    <div class="list-group list-group-flush bg-transparent">
+                        {% for follow in following_list %}
+                        <div class="list-group-item bg-transparent border-bottom border-white border-opacity-10 d-flex align-items-center p-3">
+                            <img src="{% if follow.following.profile.avatar %}{{ follow.following.profile.avatar.url }}{% else %}https://ui-avatars.com/api/?name={{ follow.following.username }}&background=random{% endif %}" 
+                                 class="rounded-pill me-3" width="45" height="45" style="object-fit: cover;">
+                            <div class="flex-grow-1">
+                                <p class="mb-0 fw-bold">{{ follow.following.username }}</p>
+                                <small class="text-muted">@{{ follow.following.username }}</small>
+                            </div>
+                            <a href="{% url 'public_profile' follow.following.username %}" class="btn btn-sm btn-outline-light rounded-pill px-3">View</a>
+                        </div>
+                        {% empty %}
+                        <div class="p-5 text-center text-muted">You are not following anyone yet.</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Followers Modal -->
+    <div class="modal fade" id="followersModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
+            <div class="modal-content bg-dark text-white border-0 shadow-lg" style="border-radius: 20px;">
+                <div class="modal-header border-bottom border-white border-opacity-10">
+                    <h5 class="modal-title fw-bold">Followers</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0" style="max-height: 70vh; overflow-y: auto;">
+                    <div class="list-group list-group-flush bg-transparent">
+                        {% for follow in followers_list %}
+                        <div class="list-group-item bg-transparent border-bottom border-white border-opacity-10 d-flex align-items-center p-3">
+                            <img src="{% if follow.follower.profile.avatar %}{{ follow.follower.profile.avatar.url }}{% else %}https://ui-avatars.com/api/?name={{ follow.follower.username }}&background=random{% endif %}" 
+                                 class="rounded-pill me-3" width="45" height="45" style="object-fit: cover;">
+                            <div class="flex-grow-1">
+                                <p class="mb-0 fw-bold">{{ follow.follower.username }}</p>
+                                <small class="text-muted">@{{ follow.follower.username }}</small>
+                            </div>
+                            <a href="{% url 'public_profile' follow.follower.username %}" class="btn btn-sm btn-outline-light rounded-pill px-3">View</a>
+                        </div>
+                        {% empty %}
+                        <div class="p-5 text-center text-muted">No followers yet.</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Booked Modal -->
+    <div class="modal fade" id="bookedModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
+            <div class="modal-content bg-dark text-white border-0 shadow-lg" style="border-radius: 20px;">
+                <div class="modal-header border-bottom border-white border-opacity-10">
+                    <h5 class="modal-title fw-bold">Who Booked You</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0" style="max-height: 70vh; overflow-y: auto;">
+                    <div class="list-group list-group-flush bg-transparent">
+                        {% for booking in booked_by_list %}
+                        <div class="list-group-item bg-transparent border-bottom border-white border-opacity-10 d-flex align-items-center p-3">
+                            <img src="{% if booking.user.profile.avatar %}{{ booking.user.profile.avatar.url }}{% else %}https://ui-avatars.com/api/?name={{ booking.user.username }}&background=random{% endif %}" 
+                                 class="rounded-pill me-3" width="45" height="45" style="object-fit: cover;">
+                            <div class="flex-grow-1">
+                                <p class="mb-0 fw-bold">{{ booking.user.username }}</p>
+                                <small class="text-muted">Booked on {{ booking.created_at|date:"M d, Y" }}</small>
+                            </div>
+                            <a href="{% url 'public_profile' booking.user.username %}" class="btn btn-sm btn-outline-light rounded-pill px-3">Profile</a>
+                        </div>
+                        {% empty %}
+                        <div class="p-5 text-center text-muted">No bookings yet.</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Profile Modal (X-Style) -->
+    <div class="modal fade" id="editProfileModal" tabindex="-1" aria-hidden="true" style="background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-fullscreen-sm-down modal-dialog-centered">
+            <div class="modal-content" style="background-color: black; border: 1px solid rgba(255,255,255,0.2); border-radius: 16px; color: white;">
+                
+                <!-- Header -->
+                <div class="modal-header border-0 d-flex align-items-center" style="padding: 10px 15px;">
+                    <div class="d-flex align-items-center gap-4">
+                        <span class="material-symbols-outlined" style="cursor: pointer;" data-bs-dismiss="modal">close</span>
+                        <h5 class="modal-title fw-bold m-0" style="font-size: 1.1rem;">Edit profile</h5>
+                    </div>
+                    <button type="button" id="save-profile-btn" class="btn btn-light rounded-pill fw-bold px-3 py-1 bg-white text-black" style="font-size: 0.9rem;">Save</button>
+                </div>
+
+                <!-- Form Body -->
+                <div class="modal-body p-0 position-relative" style="max-height: 80vh; overflow-y: auto;">
+                    
+                    <!-- Banner Edit Area -->
+                    <div class="position-relative" style="width: 100%; height: 150px; background-color: #333; background-image: url('{% if user.profile.banner_image %}{{ user.profile.banner_image.url }}{% endif %}'); background-size: cover; background-position: center;" id="modal-banner-preview">
+                        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;">
+                            <div style="background: rgba(0,0,0,0.6); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="document.getElementById('edit-banner-input').click()">
+                                <span class="material-symbols-outlined text-white">add_a_photo</span>
+                            </div>
+                        </div>
+                        <input type="file" id="edit-banner-input" hidden accept="image/*">
+                    </div>
+
+                    <!-- Avatar Edit Area -->
+                    <div class="position-relative" style="margin-top: -45px; margin-left: 15px; margin-bottom: 20px; width: 90px; height: 90px;">
+                        <img id="modal-avatar-preview" src="{% if user.profile.avatar %}{{ user.profile.avatar.url }}{% else %}https://ui-avatars.com/api/?name={{ user.username }}&background=random{% endif %}" style="width: 100%; height: 100%; border-radius: 50%; border: 4px solid black; object-fit: cover;">
+                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.6); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="document.getElementById('edit-avatar-input').click()">
+                            <span class="material-symbols-outlined text-white">add_a_photo</span>
+                        </div>
+                        <input type="file" id="edit-avatar-input" hidden accept="image/*">
+                    </div>
+
+                    <!-- Input Fields -->
+                    <div class="px-3 pb-4">
+                        <!-- Display Name -->
+                        <div class="mb-4 rounded px-3 py-2" style="border: 1px solid rgba(255,255,255,0.3);">
+                            <label for="edit-display-name" class="form-label mb-0 text-white-50" style="font-size: 0.8rem;">Name</label>
+                            <input type="text" class="form-control bg-transparent text-white border-0 shadow-none p-0" id="edit-display-name" value="{% if user.profile.display_name %}{{ user.profile.display_name }}{% else %}{{ user.username }}{% endif %}" style="font-size: 1rem; box-shadow: none;">
+                        </div>
+
+                        <!-- Bio -->
+                        <div class="mb-4 rounded px-3 py-2" style="border: 1px solid rgba(255,255,255,0.3);">
+                            <label for="edit-bio" class="form-label mb-0 text-white-50" style="font-size: 0.8rem;">Bio</label>
+                            <textarea class="form-control bg-transparent text-white border-0 shadow-none p-0" id="edit-bio" style="font-size: 1rem; box-shadow: none; min-height: 80px; resize: none;">{% if user.profile.bio %}{{ user.profile.bio }}{% endif %}</textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tabs-header">
+        <div class="tab-item active">
+            <span class="material-symbols-outlined fs-5">history</span>
+        </div>
+        <div class="tab-item">
+            <span class="material-symbols-outlined fs-5">person_pin</span>
+        </div>
+    </div>
+
+    <div class="tab-content">
+        <div class="list-view">
+            <!-- Time History of Live Items -->
+            <div class="history-item">
+                <span class="material-symbols-outlined">live_tv</span>
+                <div class="history-text">
+                    <span class="history-title">Live stream replay</span>
+                    <span class="history-date">Yesterday, 8:00 PM • 1h 24m</span>
+                </div>
+            </div>
+
+            <div class="history-item">
+                <span class="material-symbols-outlined">live_tv</span>
+                <div class="history-text">
+                    <span class="history-title">Live stream replay</span>
+                    <span class="history-date">Oct 12, 6:30 PM • 2h 10m</span>
+                </div>
+            </div>
+
+            <div class="history-item">
+                <span class="material-symbols-outlined">live_tv</span>
+                <div class="history-text">
+                    <span class="history-title">Live stream replay</span>
+                    <span class="history-date">Oct 10, 9:15 PM • 45m</span>
+                </div>
+            </div>
+
+            <div class="history-item">
+                <span class="material-symbols-outlined">live_tv</span>
+                <div class="history-text">
+                    <span class="history-title">Live stream replay</span>
+                    <span class="history-date">Oct 5, 5:00 PM • 3h 05m</span>
+                </div>
+            </div>
+
+            <div class="history-item">
+                <span class="material-symbols-outlined">live_tv</span>
+                <div class="history-text">
+                    <span class="history-title">Live stream replay</span>
+                    <span class="history-date">Sep 28, 7:45 PM • 1h 50m</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Temporary storage for image files
+    let avatarFile = null;
+    let bannerFile = null;
+
+    document.getElementById('edit-avatar-input').addEventListener('change', function(e) {
+        if(e.target.files && e.target.files[0]) {
+            avatarFile = e.target.files[0];
+            document.getElementById('modal-avatar-preview').src = URL.createObjectURL(avatarFile);
+        }
+    });
+
+    document.getElementById('edit-banner-input').addEventListener('change', function(e) {
+        if(e.target.files && e.target.files[0]) {
+            bannerFile = e.target.files[0];
+            document.getElementById('modal-banner-preview').style.backgroundImage = `url(${URL.createObjectURL(bannerFile)})`;
+        }
+    });
+
+    document.getElementById('save-profile-btn').addEventListener('click', async function() {
+        const btn = this;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+        btn.disabled = true;
+
+        const formData = new FormData();
+        formData.append('display_name', document.getElementById('edit-display-name').value);
+        formData.append('bio', document.getElementById('edit-bio').value);
+        if(avatarFile) formData.append('avatar', avatarFile);
+        if(bannerFile) formData.append('banner', bannerFile);
+
+        try {
+            const response = await fetch("{% url 'edit_profile' %}", {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Authorization': `Bearer ${getCookie('access')}`
+                },
+                body: formData
+            });
+
+            const result = await response.json();
+            
+            if(response.ok) {
+                // Update UI visually
+                document.getElementById('main-display-name').innerText = result.display_name;
+                document.getElementById('main-bio-text').innerText = result.bio || 'No bio yet';
+                
+                if(result.avatar_url) {
+                    document.getElementById('main-avatar-img').src = result.avatar_url;
+                }
+                if(result.banner_url) {
+                    document.querySelector('.profile-banner').style.backgroundImage = `url(${result.banner_url})`;
+                }
+                
+                // Close Modal
+                const modalEl = document.getElementById('editProfileModal');
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                modal.hide();
+            } else {
+                alert('Error updating profile: ' + JSON.stringify(result));
+            }
+        } catch(e) {
+            console.error(e);
+            alert('Failed to connect to server.');
+        } finally {
+            btn.innerHTML = 'Save';
+            btn.disabled = false;
+        }
+    });
+
+    // --- Copy Profile Link Logic ---
+    function copyProfileLink() {
+        const btn = document.getElementById('copy-profile-btn');
+        const originalContent = btn.innerHTML;
+        const profileUrl = window.location.origin + "{% url 'public_profile' user.username %}";
+
+        navigator.clipboard.writeText(profileUrl).then(() => {
+            btn.innerHTML = '<span class="material-symbols-outlined">check</span><span>Copied!</span>';
+            btn.style.borderColor = "#4CAF50";
+            btn.style.color = "#4CAF50";
+            
+            setTimeout(() => {
+                btn.innerHTML = originalContent;
+                btn.style.borderColor = "";
+                btn.style.color = "";
+            }, 2000);
+        }).catch(err => {
+            console.error('Could not copy text: ', err);
+            alert('Failed to copy link.');
+        });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,102 @@
+{% extends 'platform_admin_base.html' %}
+{% load static %}
+
+{% block header_title %}Dashboard Overview{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+    <!-- Premium Wallet/Revenue Card -->
+    <div class="col-md-4">
+        <div class="premium-card h-100">
+            <div style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9;">Total Platform Revenue</div>
+            <div style="font-size: 2.5rem; font-weight: bold; margin: 15px 0;">$14,230<span style="font-size: 1.2rem; opacity: 0.8;">.50</span></div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.85rem;">
+                <span><span class="material-symbols-outlined" style="font-size: 14px; vertical-align: middle;">trending_up</span> +12.5% this month</span>
+                <span style="opacity: 0.8;">via Firestore</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Users -->
+    <div class="col-md-4">
+        <div class="stat-card h-100">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                <div>
+                    <span class="material-symbols-outlined" style="color: #4CAF50; font-size: 28px;">groups</span>
+                </div>
+                <span class="badge bg-success bg-opacity-10 text-success rounded-pill">+45 today</span>
+            </div>
+            <div style="font-size: 0.9rem; color: rgba(255,255,255,0.5); text-transform: uppercase;">Total Active Users</div>
+            <div style="font-size: 2rem; font-weight: bold;">{{ total_users|default:"1,204" }}</div>
+        </div>
+    </div>
+
+    <!-- Concurrent Streams -->
+    <div class="col-md-4">
+        <div class="stat-card h-100">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                <div>
+                    <span class="material-symbols-outlined" style="color: #F44336; font-size: 28px;">live_tv</span>
+                </div>
+                <span class="badge bg-danger rounded-pill px-3 py-2" style="animation: pulse 2s infinite;">LIVE NOW</span>
+            </div>
+            <div style="font-size: 0.9rem; color: rgba(255,255,255,0.5); text-transform: uppercase;">Active Streams</div>
+            <div style="font-size: 2rem; font-weight: bold;">{{ active_streams|default:"24" }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Recent Payout Requests (Pending) -->
+    <div class="col-md-6">
+        <div class="stat-card h-100 p-0 overflow-hidden">
+            <div class="p-4 border-bottom" style="border-color: rgba(255,255,255,0.1) !important;">
+                <h5 class="m-0 fw-bold">Pending Withdrawal Requests</h5>
+            </div>
+            <div class="p-0">
+                <div class="text-center p-5 text-white-50">
+                    <span class="material-symbols-outlined" style="font-size: 40px; margin-bottom: 10px;">check_circle</span>
+                    <p>No pending withdrawal requests.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Alerts -->
+    <div class="col-md-6">
+        <div class="stat-card h-100 p-0 overflow-hidden">
+            <div class="p-4 border-bottom" style="border-color: rgba(255,255,255,0.1) !important;">
+                <h5 class="m-0 fw-bold">System Alerts & Moderation</h5>
+            </div>
+            <div class="list-group list-group-flush bg-transparent">
+                <div class="list-group-item bg-transparent text-white border-bottom border-secondary border-opacity-25 p-3 d-flex gap-3 align-items-center">
+                    <div style="background: rgba(244, 67, 54, 0.1); color: #F44336; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                        <span class="material-symbols-outlined">warning</span>
+                    </div>
+                    <div>
+                        <div class="fw-bold">High bot activity detected</div>
+                        <div class="text-white-50" style="font-size: 0.85rem;">Stream #22104 has abnormal viewer spikes.</div>
+                    </div>
+                </div>
+                <div class="list-group-item bg-transparent text-white border-0 p-3 d-flex gap-3 align-items-center">
+                    <div style="background: rgba(76, 175, 80, 0.1); color: #4CAF50; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                        <span class="material-symbols-outlined">update</span>
+                    </div>
+                    <div>
+                        <div class="fw-bold">Database Sync Normal</div>
+                        <div class="text-white-50" style="font-size: 0.85rem;">Firestore successfully backed up 2 hours ago.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    @keyframes pulse {
+        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.7); }
+        70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(244, 67, 54, 0); }
+        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(244, 67, 54, 0); }
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,476 @@
+{% extends 'mobile_base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .message-container {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        height: calc(100dvh - 75px);
+        background-color: black;
+        color: white;
+    }
+
+    /* AppBar */
+    .chat-header {
+        display: flex;
+        align-items: center;
+        padding: 10px 15px;
+        background: #121212;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        z-index: 10;
+    }
+
+    .back-btn {
+        margin-right: 15px;
+        cursor: pointer;
+        color: white;
+        text-decoration: none;
+    }
+
+    .header-info {
+        flex: 1;
+        display: flex;
+        align-items: center;
+    }
+
+    .header-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        margin-right: 12px;
+    }
+
+    .header-text {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .header-name {
+        font-weight: bold;
+        font-size: 1rem;
+    }
+
+    .header-status {
+        font-size: 11px;
+        color: #4CAF50;
+    }
+
+    /* Messages List */
+    .messages-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px 15px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+    }
+
+    .messages-list::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    .messages-list::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+    }
+
+    /* Bubble Styles */
+    .msg-bubble {
+        max-width: 75%;
+        padding: 10px 14px;
+        border-radius: 18px;
+        font-size: 0.95rem;
+        line-height: 1.4;
+        position: relative;
+        word-wrap: break-word;
+    }
+
+    .msg-sent {
+        align-self: flex-end;
+        background-color: #2196F3;
+        color: white;
+        border-bottom-right-radius: 4px;
+    }
+
+    .msg-received {
+        align-self: flex-start;
+        background-color: #333;
+        color: white;
+        border-bottom-left-radius: 4px;
+    }
+
+    .msg-time {
+        font-size: 10px;
+        margin-top: 4px;
+        opacity: 0.6;
+        text-align: right;
+    }
+
+    .typing-indicator {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.5);
+        padding: 5px 15px;
+        display: none;
+    }
+
+    /* Input Bar */
+    .chat-input-bar {
+        padding: 10px 15px;
+        background: #121212;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .chat-input-wrap {
+        flex: 1;
+        background: #222;
+        border-radius: 25px;
+        padding: 5px 15px;
+        display: flex;
+        align-items: center;
+    }
+
+    .chat-input-wrap input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        color: white;
+        padding: 8px 0;
+        font-size: 0.95rem;
+    }
+
+    .chat-input-wrap input:focus {
+        outline: none;
+    }
+
+    .send-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #2196F3;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        color: white;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+
+    .send-btn:active {
+        transform: scale(0.9);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="message-container">
+    <!-- Header -->
+    <div class="chat-header">
+        <a href="{% url 'chat' %}" class="back-btn">
+            <span class="material-symbols-outlined">arrow_back</span>
+        </a>
+        <div class="header-info">
+            <img src="https://ui-avatars.com/api/?name={{ other_user.username|default:conversation.title }}&background=random"
+                class="header-avatar">
+            <div class="header-text">
+                <span class="header-name">{{ other_user.username|default:conversation.title }}</span>
+                <span class="header-status" id="online-status">Online</span>
+            </div>
+        </div>
+        <span class="material-symbols-outlined" style="opacity: 0.6;">more_vert</span>
+    </div>
+
+    <!-- Messages -->
+    <div class="messages-list" id="messages-list">
+        <!-- Messages will be loaded here -->
+    </div>
+
+    <!-- Typing Indicator -->
+    <div class="typing-indicator" id="typing-indicator">
+        {{ other_user.username }} is typing...
+    </div>
+
+    <!-- Input -->
+    <div class="chat-input-bar">
+        <span class="material-symbols-outlined" id="chat-attach-btn"
+            style="opacity: 0.6; cursor: pointer;">add_circle</span>
+        <input type="file" id="chat-file-input" accept="image/*,video/*" style="display: none;">
+
+        <div class="chat-input-wrap">
+            <input type="text" id="chat-message-input" placeholder="Type a message..." autocomplete="off">
+            <span class="material-symbols-outlined"
+                style="opacity: 0.4; font-size: 20px; cursor: pointer;">sentiment_satisfied</span>
+        </div>
+        <button class="send-btn" id="chat-message-submit">
+            <span class="material-symbols-outlined">send</span>
+        </button>
+    </div>
+    <span class="material-symbols-outlined">send</span>
+    </button>
+</div>
+</div>
+
+<script>
+    const conversationId = "{{ conversation.id }}";
+    const currentUser = "{{ user.username }}";
+    let chatSocket = null;
+
+    // Load History
+    async function loadHistory() {
+        try {
+            const response = await fetch(`/api/chat/conversations/${conversationId}/messages/`, {
+                headers: {
+                    'Authorization': `Bearer ${getCookie('access')}`
+                }
+            });
+            const data = await response.json();
+            const list = document.getElementById('messages-list');
+
+            if (data.results) {
+                // DRF Paginated results come in reverse usually or sequential based on queryset
+                // We want oldest at top for chat
+                data.results.forEach(msg => {
+                    appendMessage(msg, false);
+                });
+                scrollToBottom();
+            }
+        } catch (e) {
+            console.error("Load History Error:", e);
+        }
+    }
+
+    function appendMessage(msg, isNew = true) {
+        const list = document.getElementById('messages-list');
+        const isMe = msg.sender.username === currentUser;
+
+        const bubble = document.createElement('div');
+        bubble.className = `msg-bubble ${isMe ? 'msg-sent' : 'msg-received'}`;
+
+        // Support Media Types
+        let htmlContent = '';
+        const msgType = msg.type || (msg.content && msg.content.message_type) || 'TEXT';
+
+        if (msgType === 'IMAGE') {
+            const mediaUrl = msg.content.url || msg.content;
+            htmlContent = `<img data-src="${mediaUrl}" alt="Photo" style="max-width: 220px; border-radius: 12px; display: block; filter: blur(4px); transition: filter 0.3s; cursor: pointer;">`;
+        } else if (msgType === 'VIDEO') {
+            const mediaUrl = msg.content.url || msg.content;
+            htmlContent = `<video data-src="${mediaUrl}" controls style="max-width: 220px; border-radius: 12px; background: black; cursor: pointer;"></video>`;
+        } else {
+            const text = msg.content.text || msg.content;
+            htmlContent = `<div class="msg-text">${text}</div>`;
+        }
+
+        bubble.innerHTML = `
+            ${htmlContent}
+            <div class="msg-time">${formatTime(msg.created_at)}</div>
+        `;
+
+        list.appendChild(bubble);
+
+        // Intercept Media elements for Local DB Caching
+        const mediaEl = bubble.querySelector('[data-src]');
+        if (mediaEl) {
+            getCachedMediaUrl(mediaEl.getAttribute('data-src')).then(localUrl => {
+                mediaEl.src = localUrl;
+                mediaEl.style.filter = "none";
+                if (isNew) scrollToBottom();
+            });
+        }
+
+        if (isNew) scrollToBottom();
+    }
+
+    function scrollToBottom() {
+        const list = document.getElementById('messages-list');
+        list.scrollTop = list.scrollHeight;
+    }
+
+    function formatTime(dateStr) {
+        const date = new Date(dateStr);
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    // WebSocket Logic
+    function connectWebSocket() {
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+        // Note: In local dev use 127.0.0.1:8000, in prod use current host
+        const wsUrl = wsProtocol + window.location.host + `/ws/chat/${conversationId}/`;
+
+        chatSocket = new WebSocket(wsUrl);
+
+        chatSocket.onmessage = function (e) {
+            const data = JSON.parse(e.data);
+            if (data.type === 'message.new') {
+                appendMessage(data.message);
+            } else if (data.type === 'typing') {
+                if (data.user !== currentUser) {
+                    toggleTyping(data.is_typing);
+                }
+            }
+        };
+
+        chatSocket.onclose = function (e) {
+            console.error('Chat socket closed unexpectedly. Reconnecting...');
+            setTimeout(connectWebSocket, 3000);
+        };
+    }
+
+    function toggleTyping(show) {
+        document.getElementById('typing-indicator').style.display = show ? 'block' : 'none';
+    }
+
+    // Event Listeners
+    document.addEventListener('DOMContentLoaded', () => {
+        loadHistory();
+        connectWebSocket();
+
+        const input = document.getElementById('chat-message-input');
+        const submit = document.getElementById('chat-message-submit');
+
+        submit.onclick = sendMessage;
+        input.onkeypress = (e) => {
+            if (e.key === 'Enter') sendMessage();
+        };
+
+        // Typing logic
+        let typingTimeout = null;
+        input.oninput = () => {
+            if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+                chatSocket.send(JSON.stringify({
+                    'type': 'typing.start',
+                    'payload': {}
+                }));
+
+                clearTimeout(typingTimeout);
+                typingTimeout = setTimeout(() => {
+                    chatSocket.send(JSON.stringify({
+                        'type': 'typing.stop',
+                        'payload': {}
+                    }));
+                }, 2000);
+            }
+        };
+    });
+
+    function sendMessage() {
+        const input = document.getElementById('chat-message-input');
+        const content = input.value.trim();
+
+        if (content && chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+            chatSocket.send(JSON.stringify({
+                'type': 'message.send',
+                'payload': {
+                    'content': content,
+                    'message_type': 'TEXT'
+                }
+            }));
+            input.value = '';
+        }
+    }
+
+    // ----------------------------------------------------
+    // MEDIA ATTACHMENTS UPLOAD
+    // ----------------------------------------------------
+    document.getElementById('chat-attach-btn').onclick = () => {
+        document.getElementById('chat-file-input').click();
+    };
+
+    document.getElementById('chat-file-input').onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            // Optional: Start loading state here
+            const response = await fetch('/api/chat/upload/', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${getCookie('access')}` },
+                body: formData
+            });
+            const data = await response.json();
+
+            if (response.ok) {
+                const isVideo = file.type.startsWith('video/');
+                chatSocket.send(JSON.stringify({
+                    'type': 'message.send',
+                    'payload': {
+                        'content': { 'url': data.url, 'name': data.name, 'message_type': isVideo ? 'VIDEO' : 'IMAGE' },
+                        'message_type': isVideo ? 'VIDEO' : 'IMAGE'
+                    }
+                }));
+            } else {
+                alert('Upload failed: ' + (data.error || 'Check server permissions'));
+            }
+        } catch (err) {
+            console.error('File Upload Interrupted:', err);
+        }
+        e.target.value = ''; // Reset input
+    };
+
+    // ----------------------------------------------------
+    // WHATSAPP-STYLE LOCAL DATABASE CACHING (INDEXEDDB)
+    // ----------------------------------------------------
+    let idb;
+    const request = indexedDB.open('LivKitChats', 1);
+    request.onupgradeneeded = (e) => {
+        idb = e.target.result;
+        if (!idb.objectStoreNames.contains('media')) {
+            idb.createObjectStore('media');
+        }
+    };
+    request.onsuccess = (e) => { idb = e.target.result; };
+
+    function getCachedMediaUrl(serverUrl) {
+        if (!idb) return Promise.resolve(serverUrl);
+
+        return new Promise((resolve) => {
+            const tx = idb.transaction('media', 'readonly');
+            const getReq = tx.objectStore('media').get(serverUrl);
+            getReq.onsuccess = async () => {
+                if (getReq.result) {
+                    // Cache Hit: Render from Local Hard Drive Instance!
+                    resolve(URL.createObjectURL(getReq.result));
+                } else {
+                    // Cache Miss: Download from Cloud and Cache Blobs locally
+                    try {
+                        const response = await fetch(serverUrl);
+                        if (!response.ok) throw new Error('Cloud Request Blocked');
+                        const blob = await response.blob();
+                        const putTx = idb.transaction('media', 'readwrite');
+                        putTx.objectStore('media').put(blob, serverUrl);
+                        resolve(URL.createObjectURL(blob));
+                    } catch (err) {
+                        resolve(serverUrl); // Fallback exactly to absolute server URL 
+                    }
+                }
+            };
+            getReq.onerror = () => resolve(serverUrl);
+        });
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+{% endblock %}

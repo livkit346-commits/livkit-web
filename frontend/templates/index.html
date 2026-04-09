@@ -1,0 +1,1446 @@
+{% extends 'mobile_base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<!-- Include FontAwesome for Modals -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+    /* Premium Feed Container Setup */
+    .feed-container {
+        height: 100vh;
+        height: calc(100dvh - 75px);
+        background-color: #000;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .feed-container::-webkit-scrollbar {
+        display: none;
+        /* Chrome/Safari/Opera */
+    }
+
+    /* Individual Feed Item (Dynamic Post) */
+    .feed-item {
+        height: 100%;
+        width: 100%;
+        position: relative;
+        background-color: #000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+    .feed-media {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    /* TikTok Style Top Header Overlay for Stream Info */
+    .top-header-overlay {
+        position: absolute;
+        top: calc(env(safe-area-inset-top, 20px) + 12px);
+        left: 12px;
+        right: 12px;
+        z-index: 10;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        pointer-events: none;
+    }
+
+    .streamer-profile-pill {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .profile-row {
+        display: flex;
+        align-items: center;
+        background-color: rgba(0, 0, 0, 0.4);
+        padding: 5px 14px 5px 5px;
+        border-radius: 30px;
+        gap: 10px;
+        pointer-events: auto;
+        backdrop-filter: blur(8px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        text-decoration: none;
+    }
+
+    .profile-row:hover {
+        background-color: rgba(0, 0, 0, 0.6);
+    }
+
+    .profile-row .avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #ff0050;
+    }
+
+    .streamer-info {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .profile-row .username {
+        font-weight: 700;
+        font-size: 0.90rem;
+        color: white;
+        margin: 0;
+        line-height: 1.1;
+        letter-spacing: 0.3px;
+    }
+
+    .follow-btn {
+        background: linear-gradient(135deg, #ff0050, #d40042);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 5px 14px;
+        font-weight: bold;
+        font-size: 0.8rem;
+        cursor: pointer;
+        margin-left: 6px;
+        transition: transform 0.1s ease;
+        box-shadow: 0 2px 6px rgba(255, 0, 80, 0.4);
+    }
+
+    .follow-btn:active {
+        transform: scale(0.92);
+    }
+
+    .view-count-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background-color: rgba(0, 0, 0, 0.45);
+        color: white;
+        padding: 4px 10px;
+        border-radius: 14px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        backdrop-filter: blur(8px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .view-count-pill .material-symbols-outlined {
+        font-size: 15px;
+    }
+
+    /* Floating Right Action Icons Container */
+    .right-action-bar {
+        position: absolute;
+        right: 15px;
+        bottom: 90px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        z-index: 10;
+        gap: 18px;
+    }
+
+    .action-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        cursor: pointer;
+        pointer-events: auto;
+        transition: transform 0.2s;
+    }
+
+    .action-btn:hover {
+        transform: scale(1.05);
+    }
+
+    .action-icon-circle {
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        background-color: rgba(0, 0, 0, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 5px;
+        backdrop-filter: blur(5px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .action-icon-circle .material-symbols-outlined {
+        color: white;
+        font-size: 26px;
+        text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+    }
+
+    .action-label {
+        color: white;
+        font-size: 0.8rem;
+        text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+        font-weight: 600;
+    }
+
+    .floating-comments-container {
+        position: absolute;
+        bottom: 80px;
+        left: 15px;
+        width: calc(100% - 90px);
+        /* Leave room for right bar */
+        height: 250px;
+        z-index: 10;
+        overflow-y: auto;
+        pointer-events: auto;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+        /* Fade out at the top */
+        -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 1) 20%);
+        mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 1) 20%);
+    }
+
+    /* Pushes comments to the bottom while allowing upward scrolling safely */
+    .floating-comments-container::before {
+        content: "";
+        margin-top: auto;
+    }
+
+    .floating-comments-container::-webkit-scrollbar {
+        display: none;
+    }
+
+    .floating-comment {
+        background-color: transparent;
+        padding: 4px 14px 4px 6px;
+        margin-bottom: 6px;
+        max-width: 90%;
+        word-wrap: break-word;
+        font-family: inherit;
+        font-size: 0.9rem;
+        color: white;
+        text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.8);
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .comment-avatar {
+        width: 30px;
+        /* Slightly larger avatar */
+        height: 30px;
+        border-radius: 50%;
+        object-fit: cover;
+        flex-shrink: 0;
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    }
+
+    .comment-content {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        line-height: 1.3;
+    }
+
+    .floating-comment .comment-author {
+        font-family: inherit;
+        font-weight: bold;
+        color: rgba(255, 255, 255, 0.9);
+        text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.8);
+    }
+
+    /* Sleek Bottom Embedded Chat Input */
+    .bottom-comment-bar {
+        position: absolute;
+        bottom: 20px;
+        left: 15px;
+        right: 15px;
+        display: flex;
+        align-items: center;
+        z-index: 10;
+        pointer-events: auto;
+    }
+
+    .comment-input-wrapper {
+        flex: 1;
+        background-color: rgba(0, 0, 0, 0.4);
+        border-radius: 24px;
+        padding: 5px 15px 5px 20px;
+        display: flex;
+        align-items: center;
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        margin-right: 10px;
+        /* Space for the send button */
+    }
+
+    .comment-input-wrapper input {
+        background: transparent;
+        border: none;
+        color: white;
+        width: 100%;
+        outline: none;
+        font-size: 0.95rem;
+        padding: 8px 0;
+    }
+
+    .comment-input-wrapper input::placeholder {
+        color: rgba(255, 255, 255, 0.8);
+    }
+
+    /* Emote & Send buttons integrated inside the comment bar */
+    .chat-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .inline-emote-btn,
+    .inline-send-btn {
+        background: none;
+        border: none;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4px;
+        cursor: pointer;
+        transition: transform 0.2s, color 0.2s;
+    }
+
+    .inline-emote-btn:hover,
+    .inline-send-btn:hover {
+        transform: scale(1.1);
+    }
+
+    .inline-send-btn {
+        color: #ff0050;
+        /* TikTok red brand color for send icon */
+    }
+
+    /* TikTok Style Emote Drawer */
+    .emote-drawer {
+        position: absolute;
+        bottom: 70px;
+        /* Right above the input bar */
+        left: 15px;
+        right: 15px;
+        background-color: rgba(20, 20, 20, 0.95);
+        border-radius: 16px;
+        padding: 12px;
+        display: grid;
+        grid-template-columns: repeat(8, 1fr);
+        gap: 10px;
+        backdrop-filter: blur(10px);
+        transform: translateY(20px);
+        opacity: 0;
+        pointer-events: none;
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        z-index: 100;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.5);
+    }
+
+    .emote-drawer.active {
+        transform: translateY(0);
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .emote-item {
+        font-size: 24px;
+        text-align: center;
+        cursor: pointer;
+        transition: transform 0.1s;
+    }
+
+    .emote-item:active {
+        transform: scale(0.8);
+    }
+
+    /* Fixed Appbar Linked to Navigation */
+    .top-appbar {
+        position: absolute;
+        top: env(safe-area-inset-top, 0px);
+        right: 0;
+        z-index: 100;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        padding: 10px 15px;
+        width: 100%;
+        pointer-events: none;
+        gap: 12px;
+    }
+
+    .top-action-icon {
+        pointer-events: auto;
+        color: white;
+        cursor: pointer;
+        padding: 6px;
+        border-radius: 50%;
+        background-color: rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(4px);
+        transition: transform 0.2s ease, background 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .top-action-icon:hover {
+        transform: scale(1.1);
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    /* Top Tabs for Differentiation */
+    .top-tabs-container {
+        position: absolute;
+        top: env(safe-area-inset-top, 10px);
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 15px;
+        z-index: 100;
+        pointer-events: auto;
+    }
+
+    .top-tab {
+        color: rgba(255, 255, 255, 0.6);
+        font-weight: 700;
+        font-size: 1.1rem;
+        cursor: pointer;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        transition: color 0.2s;
+        text-decoration: none;
+    }
+
+    .top-tab.active {
+        color: white;
+        border-bottom: 2px solid white;
+        padding-bottom: 2px;
+    }
+
+    /* Embedded Search Bar */
+    .top-search-form {
+        display: flex;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(8px);
+        border-radius: 20px;
+        padding: 4px 12px;
+        pointer-events: auto;
+        margin-right: auto;
+        /* Pushes other icons to the right */
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .top-search-form input {
+        background: transparent;
+        border: none;
+        color: white;
+        outline: none;
+        width: 140px;
+        font-size: 0.9rem;
+    }
+
+    .top-search-form input::placeholder {
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    .top-search-btn {
+        background: none;
+        border: none;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        cursor: pointer;
+    }
+
+    /* Modal Styles */
+    .bottom-sheet-modal {
+        position: fixed;
+        bottom: -100%;
+        left: 0;
+        right: 0;
+        background-color: #1a1a1a;
+        border-top-left-radius: 20px;
+        border-top-right-radius: 20px;
+        z-index: 2001;
+        /* Covers bottom nav */
+        transition: bottom 0.3s ease-in-out;
+        display: flex;
+        flex-direction: column;
+        max-height: 80vh;
+        box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.5);
+        padding-bottom: env(safe-area-inset-bottom, 20px);
+    }
+
+    .bottom-sheet-modal.active {
+        bottom: 0px;
+    }
+
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 2000;
+        display: none;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+
+    .modal-overlay.active {
+        display: block;
+        opacity: 1;
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 20px;
+        border-bottom: 1px solid #333;
+    }
+
+    .modal-title {
+        color: white;
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .modal-close {
+        color: white;
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+    }
+
+    .modal-body {
+        padding: 20px;
+        overflow-y: auto;
+        color: white;
+        -ms-overflow-style: none;
+        /* IE and Edge */
+        scrollbar-width: none;
+        /* Firefox */
+    }
+
+    .modal-body::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* TikTok Style Share Sheet */
+    .share-scroll-container {
+        display: flex;
+        overflow-x: auto;
+        gap: 20px;
+        padding-bottom: 15px;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .share-scroll-container::-webkit-scrollbar {
+        display: none;
+    }
+
+    .share-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        min-width: 60px;
+    }
+
+    .share-item .icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 26px;
+        background: #333;
+        color: white;
+    }
+
+    .share-item .action-icon {
+        background: #2A2A2A;
+        font-size: 22px;
+    }
+
+    .share-item span {
+        font-size: 0.75rem;
+        color: #ddd;
+        white-space: nowrap;
+    }
+
+    .share-divider {
+        height: 1px;
+        background-color: #333;
+        margin: 5px 0 20px 0;
+    }
+
+    /* Mature Gift Modal */
+    .gift-balance-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #252525;
+        padding: 12px 20px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+    }
+
+    .gift-balance-header .balance {
+        color: #FFD700;
+        font-weight: bold;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .gift-balance-header .btn-recharge {
+        background: #ff0050;
+        color: white;
+        border: none;
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .gift-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+    }
+
+    .gift-item {
+        background: #1a1a1a;
+        border-radius: 12px;
+        padding: 15px 5px;
+        text-align: center;
+        cursor: pointer;
+        border: 1px solid #333;
+        transition: all 0.1s;
+        /* Faster transition for combo clicks */
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .gift-item:active {
+        transform: scale(0.9);
+        border-color: #ff0050;
+    }
+
+    .gift-item:hover {
+        border-color: #ff0050;
+        background: #222;
+    }
+
+    .gift-icon {
+        font-size: 32px;
+        margin-bottom: 8px;
+        pointer-events: none;
+    }
+
+    .gift-price {
+        font-size: 0.8rem;
+        color: #aaa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+    }
+
+    /* Subscription Tabs */
+    .sub-tabs {
+        display: flex;
+        border-bottom: 1px solid #333;
+        margin-bottom: 15px;
+    }
+
+    .sub-tab {
+        flex: 1;
+        text-align: center;
+        padding: 12px;
+        color: #888;
+        cursor: pointer;
+        font-weight: bold;
+        transition: color 0.3s;
+    }
+
+    .sub-tab.active {
+        color: white;
+        border-bottom: 2px solid #ff0050;
+    }
+
+    .sub-content {
+        display: none;
+    }
+
+    .sub-content.active {
+        display: block;
+    }
+
+    .sub-option {
+        background: #222;
+        border-radius: 12px;
+        padding: 15px;
+        margin-bottom: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border: 1px solid transparent;
+        cursor: pointer;
+    }
+
+    .sub-option:hover {
+        border-color: #ff0050;
+    }
+
+    .sub-price {
+        background: #ff0050;
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 0.95rem;
+    }
+
+    /* Floating Gift Animation overlay */
+    .floating-gift-anim {
+        position: absolute;
+        bottom: 300px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 80px;
+        pointer-events: none;
+        z-index: 9999;
+        animation: giftFloatUp 1.5s ease-out forwards;
+        filter: drop-shadow(0px 10px 15px rgba(0, 0, 0, 0.5));
+    }
+
+    .combo-text {
+        position: absolute;
+        bottom: 0px;
+        right: -30px;
+        color: #ffeb3b;
+        font-weight: 900;
+        font-size: 24px;
+        font-style: italic;
+        text-shadow: 2px 2px 0px #ff0050, -1px -1px 0px #000;
+        animation: popCombo 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes giftFloatUp {
+        0% {
+            transform: translateX(-50%) translateY(0) scale(0.5);
+            opacity: 0;
+        }
+
+        15% {
+            transform: translateX(-50%) translateY(-20px) scale(1.2);
+            opacity: 1;
+        }
+
+        30% {
+            transform: translateX(-50%) translateY(-40px) scale(1);
+            opacity: 1;
+        }
+
+        80% {
+            transform: translateX(-50%) translateY(-150px) scale(1);
+            opacity: 1;
+        }
+
+        100% {
+            transform: translateX(-50%) translateY(-200px) scale(0.8);
+            opacity: 0;
+        }
+    }
+
+    @keyframes popCombo {
+        0% {
+            transform: scale(0.5);
+        }
+
+        50% {
+            transform: scale(1.5);
+        }
+
+        100% {
+            transform: scale(1);
+        }
+    }
+
+    /* Embedded Search Bar */
+    .top-search-form {
+        display: flex;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(8px);
+        border-radius: 20px;
+        padding: 4px 12px;
+        pointer-events: auto;
+        margin-right: auto;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .top-search-form input {
+        background: transparent;
+        border: none;
+        color: white;
+        outline: none;
+        width: 140px;
+        font-size: 0.9rem;
+    }
+
+    .top-search-form input::placeholder {
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    .top-search-btn {
+        background: none;
+        border: none;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        cursor: pointer;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Global App Navigation Linking -->
+<div class="top-appbar">
+    <a href="{% url 'go_live' %}" class="top-action-icon" aria-label="Go Live">
+        <span class="material-symbols-outlined" style="font-size: 30px;">video_call</span>
+    </a>
+    <a href="{% url 'home_search' %}" class="top-action-icon" aria-label="Search">
+        <span class="material-symbols-outlined" style="font-size: 30px;">search</span>
+    </a>
+</div>
+
+
+
+<div class="feed-container">
+    {% for stream in live_streams %}
+
+        <div class="feed-item" data-streamid="{{ stream.streamid }}">
+        <img class="feed-media"
+            src="{{ stream.thumbnail_url|default:'https://images.unsplash.com/photo-1542204165-65bf26472b9b?auto=format&fit=crop&w=1080&q=80' }}"
+            alt="Live Feed Preview">
+
+        <div class="top-header-overlay">
+            <div class="streamer-profile-pill">
+                <!-- Changed anchor to a div with onclick to navigate to the new Public Profile page -->
+                <div class="profile-row" onclick="window.location.href='{% url 'public_profile' stream.streamer_username %}';">
+                    <img src="{{ stream.streamer_avatar }}" class="avatar" alt="Streamer Avatar">
+                    <div class="streamer-info">
+                        <h6 class="username">{{ stream.streamer_username }}</h6>
+                        <span style="font-size: 0.75rem; color: #eee; margin-top: 2px; font-weight: 500; letter-spacing: 0.2px;">{{ stream.title }} • {{ stream.category }}</span>
+                    </div>
+                </div>
+                <!-- Status Badges -->
+                <div style="display: flex; gap: 6px;">
+                    <div class="view-count-pill"
+                        style="background-color: #ff0050; padding: 3px 8px; letter-spacing: 0.5px;">LIVE</div>
+                    <div class="view-count-pill">
+                        <span class="material-symbols-outlined">visibility</span>
+                        <span>{{ stream.viewers }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="right-action-bar">
+            <div class="action-btn" onclick="openModal('joinModal')">
+                <div class="action-icon-circle">
+                    <span class="material-symbols-outlined">person_add</span>
+                </div>
+                <span class="action-label">Join</span>
+            </div>
+            <!-- Sub icon set to monetization_on -->
+            <div class="action-btn" onclick="openModal('subModal')">
+                <div class="action-icon-circle">
+                    <span class="material-symbols-outlined">monetization_on</span>
+                </div>
+                <span class="action-label">Sub</span>
+            </div>
+            <div class="action-btn" onclick="openModal('giftModal')">
+                <div class="action-icon-circle">
+                    <span class="material-symbols-outlined">card_giftcard</span>
+                </div>
+                <span class="action-label">Gift</span>
+            </div>
+            <div class="action-btn" onclick="openModal('shareModal')">
+                <div class="action-icon-circle">
+                    <span class="material-symbols-outlined">share</span>
+                </div>
+                <span class="action-label">Share</span>
+            </div>
+        </div>
+
+        <!-- Floating TikTok Comments Container -->
+        <div class="floating-comments-container" id="commentsBox">
+            <div class="floating-comment">
+                <img src="https://ui-avatars.com/api/?name=C&background=random" class="comment-avatar" alt="Avatar">
+                <div class="comment-content">
+                    <span class="comment-author">CoolUser99:</span>
+                    <span>This stream is amazing! 🔥</span>
+                </div>
+            </div>
+            <div class="floating-comment">
+                <img src="https://ui-avatars.com/api/?name=K&background=random" class="comment-avatar" alt="Avatar">
+                <div class="comment-content">
+                    <span class="comment-author">CryptoKing:</span>
+                    <span>Hello from Brazil 🇧🇷</span>
+                </div>
+            </div>
+            <div class="floating-comment">
+                <img src="https://ui-avatars.com/api/?name=G&background=random" class="comment-avatar" alt="Avatar">
+                <div class="comment-content">
+                    <span class="comment-author">GamerGirl:</span>
+                    <span>Can you do a house tour?</span>
+                </div>
+            </div>
+            <div class="floating-comment" style="background: rgba(255, 0, 80, 0.2); border-left: 3px solid #ff0050;">
+                <img src="https://ui-avatars.com/api/?name=Host&background=ff0050&color=fff" class="comment-avatar"
+                    alt="Avatar">
+                <div class="comment-content">
+                    <span class="comment-author" style="color: white; font-weight: 800;">LivKit Host:</span>
+                    <span style="font-weight: 500;">Welcome everyone! Thanks for joining.</span>
+                </div>
+            </div>
+            <div class="floating-comment">
+                <img src="https://ui-avatars.com/api/?name=F&background=random" class="comment-avatar" alt="Avatar">
+                <div class="comment-content">
+                    <span class="comment-author">FanBoy12:</span>
+                    <span>Just subscribed!! 🎉</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hidden TikTok Emote Drawer -->
+        <div class="emote-drawer" id="emoteDrawer">
+            <div class="emote-item" onclick="addEmote('🔥')">🔥</div>
+            <div class="emote-item" onclick="addEmote('😂')">😂</div>
+            <div class="emote-item" onclick="addEmote('❤️')">❤️</div>
+            <div class="emote-item" onclick="addEmote('😍')">😍</div>
+            <div class="emote-item" onclick="addEmote('💯')">💯</div>
+            <div class="emote-item" onclick="addEmote('🙌')">🙌</div>
+            <div class="emote-item" onclick="addEmote('👏')">👏</div>
+            <div class="emote-item" onclick="addEmote('🥺')">🥺</div>
+            <div class="emote-item" onclick="addEmote('🎉')">🎉</div>
+            <div class="emote-item" onclick="addEmote('✨')">✨</div>
+            <div class="emote-item" onclick="addEmote('😎')">😎</div>
+            <div class="emote-item" onclick="addEmote('😭')">😭</div>
+            <div class="emote-item" onclick="addEmote('💀')">💀</div>
+            <div class="emote-item" onclick="addEmote('👍')">👍</div>
+            <div class="emote-item" onclick="addEmote('🙏')">🙏</div>
+            <div class="emote-item" onclick="addEmote('💪')">💪</div>
+        </div>
+
+        <!-- Bottom Chat Input with integrated emote -->
+        <div class="bottom-comment-bar">
+            <div class="comment-input-wrapper">
+                <input type="text" id="chatInput" placeholder="Add comment..." autocomplete="off">
+                <button class="inline-emote-btn" onclick="toggleEmoteDrawer()">
+                    <span class="material-symbols-outlined" style="font-size: 26px;">sentiment_satisfied</span>
+                </button>
+            </div>
+            <!-- Send Button is now entirely outside the wrapper, beside it -->
+            <button class="inline-send-btn" onclick="sendMockComment()"
+                style="background: rgba(0,0,0,0.4); border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.1);">
+                <span class="material-symbols-outlined" style="font-size: 24px; color: #ff0050;">send</span>
+            </button>
+        </div>
+    </div>
+    {% empty %}
+    <div class="feed-item"
+        style="display:flex; flex-direction:column; justify-content:center; align-items:center; background:#111; height:100%;">
+        <span class="material-symbols-outlined"
+            style="font-size: 64px; color: #444; margin-bottom: 20px;">videocam_off</span>
+        <h3 style="color: white; font-weight: 700;">No Active Streams</h3>
+        <p style="color: #aaa; text-align: center; max-width: 80%;">Follow more creators or start your own live stream
+            to build your audience!</p>
+        <a href="{% url 'go_live' %}" class="btn btn-primary"
+            style="margin-top: 20px; background: #ff0050; border: none; padding: 10px 24px; border-radius: 20px; color: white; text-decoration: none; font-weight: 600;">Go
+            Live</a>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- ================= MODALS SECTION ================= -->
+<div class="modal-overlay" id="modalOverlay"></div>
+
+<!-- Share Modal (TikTok Style) -->
+<div class="bottom-sheet-modal" id="shareModal">
+    <div class="modal-header">
+        <h3 class="modal-title">Share to</h3>
+        <button class="modal-close" onclick="closeModal('shareModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+        <div class="share-scroll-container">
+            <div class="share-item"
+                onclick="window.open('https://api.whatsapp.com/send?text=Check out this LivKit Live Stream! ' + window.location.href, '_blank')">
+                <div class="icon" style="background:#25D366"><i class="fa-brands fa-whatsapp"></i></div>
+                <span>WhatsApp</span>
+            </div>
+            <div class="share-item"
+                onclick="window.open('https://twitter.com/intent/tweet?url=' + window.location.href + '&text=Check out this LivKit Live Stream!', '_blank')">
+                <div class="icon" style="background:#000000; border: 1px solid #333;"><i
+                        class="fa-brands fa-x-twitter"></i></div><span>X</span>
+            </div>
+            <div class="share-item"
+                onclick="window.open('https://www.facebook.com/sharer/sharer.php?u=' + window.location.href, '_blank')">
+                <div class="icon" style="background:#1877F2"><i class="fa-brands fa-facebook"></i></div>
+                <span>Facebook</span>
+            </div>
+            <div class="share-item"
+                onclick="alert('Instagram sharing from web is not directly supported. The link has been copied to your clipboard to paste in the app!'); navigator.clipboard.writeText(window.location.href);">
+                <div class="icon" style="background:#E1306C"><i class="fa-brands fa-instagram"></i></div>
+                <span>Instagram</span>
+            </div>
+            <div class="share-item"
+                onclick="window.open('https://t.me/share/url?url=' + window.location.href + '&text=Check out this LivKit Live Stream!', '_blank')">
+                <div class="icon" style="background:#0088cc"><i class="fa-brands fa-telegram"></i></div>
+                <span>Telegram</span>
+            </div>
+        </div>
+        <div class="share-divider"></div>
+        <div class="share-scroll-container" style="padding-bottom: 5px;">
+            <div class="share-item" onclick="copyLivKitLink()">
+                <div class="icon action-icon"><i class="fa-solid fa-link"></i></div><span>Copy Link</span>
+            </div>
+            <div class="share-item">
+                <div class="icon action-icon"><i class="fa-regular fa-flag"></i></div><span>Report</span>
+            </div>
+            <div class="share-item">
+                <div class="icon action-icon"><i class="fa-solid fa-ban"></i></div><span>Not interested</span>
+            </div>
+            <div class="share-item" onclick="shareStreamLink()">
+                <div class="icon action-icon"><i class="fa-solid fa-paper-plane"></i></div><span>Send message</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gift Modal (Mature Look) -->
+<div class="bottom-sheet-modal" id="giftModal">
+    <div class="modal-header">
+        <h3 class="modal-title">Send Gift</h3>
+        <button class="modal-close" onclick="closeModal('giftModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+        <div class="gift-balance-header">
+            <div class="balance" id="giftBalance">
+                <i class="fa-solid fa-coins"></i> {{ coin_balance|default:"0" }}
+            </div>
+            <button class="btn-recharge" onclick="closeModal('giftModal'); openModal('rechargeModal');">Recharge</button>
+        </div>
+        <div class="gift-grid">
+            {% for gift in virtual_gifts %}
+            <div class="gift-item" 
+                 data-display="{% if gift.css_icon_class %}<span class='material-symbols-outlined' style='font-size: 32px; color: #ff0050;'>{{ gift.css_icon_class }}</span>{% else %}🎁{% endif %}"
+                 data-id="{{ gift.name }}"
+                 data-amount="{{ gift.coin_cost }}"
+                 onclick="sendGiftFromElement(this)">
+                <div class="gift-icon">
+                    {% if gift.css_icon_class %}
+                        <span class="material-symbols-outlined" style="font-size: 32px; color: #ff0050;">{{ gift.css_icon_class }}</span>
+                    {% else %}
+                        🎁
+                    {% endif %}
+                </div>
+                <div class="gift-price"><i class="fa-solid fa-coins" style="color:#FFD700"></i> {{ gift.coin_cost }}</div>
+                <div style="font-size: 0.65rem; color: #aaa; margin-top: 2px; font-weight: 500;">{{ gift.name }}</div>
+            </div>
+            {% empty %}
+                <div style="grid-column: span 4; text-align: center; color: #555; padding: 20px;">No gifts available</div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Join Modal -->
+<div class="bottom-sheet-modal" id="joinModal">
+    <div class="modal-header">
+        <h3 class="modal-title">Guest Request</h3>
+        <button class="modal-close" onclick="closeModal('joinModal')">&times;</button>
+    </div>
+    <div class="modal-body" style="text-align: center;">
+        <div style="font-size: 60px; margin-bottom: 10px; color: #4CAF50;">🙋</div>
+        <p style="color: #bbb; margin-bottom: 20px;">Request to join the host as a guest in this stream. You will share
+            your camera and microphone.</p>
+        <button
+            style="background: #ff0050; color: white; border: none; padding: 14px 30px; border-radius: 25px; font-weight: bold; width: 100%; font-size: 1.05rem;"
+            onclick="closeModal('joinModal')">Send Request</button>
+    </div>
+</div>
+
+<!-- Dynamic Sub Modal -->
+<div class="bottom-sheet-modal" id="subModal">
+    <div class="modal-header">
+        <h3 class="modal-title">Premium Access</h3>
+        <button class="modal-close" onclick="closeModal('subModal')">&times;</button>
+    </div>
+    <div class="modal-body" style="padding-top: 5px;">
+        <p style="color: #888; font-size: 0.85rem; margin-bottom: 15px; text-align: center;">Choose a timed tier to unlock exclusive features and higher status.</p>
+        
+        <div id="coinSubs" class="sub-content active">
+            {% for tier in subscription_tiers %}
+            <div class="sub-option">
+                <div>
+                    <div style="font-weight: bold; font-size: 1.1rem; color: #fff;">{{ tier.duration_hours }} Hour Pass</div>
+                    {% if tier.discount_percentage > 0 %}
+                    <div style="font-size: 0.75rem; color: #FF9100; margin-top: 2px; font-weight: bold;">{{ tier.discount_percentage }}% DISCOUNT</div>
+                    {% endif %}
+                </div>
+                <div class="sub-price" style="display: flex; flex-direction: column; align-items: flex-end;">
+                    <span>${{ tier.get_final_price|floatformat:2 }}</span>
+                    {% if tier.discount_percentage > 0 %}
+                    <span style="font-size: 0.7rem; text-decoration: line-through; opacity: 0.5;">${{ tier.price }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div style="text-align: center; color: #777; padding: 20px 0;">No active subscription tiers found in admin</div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- New Recharge Modal -->
+<div class="bottom-sheet-modal" id="rechargeModal">
+    <div class="modal-header">
+        <h3 class="modal-title">Recharge Coins</h3>
+        <button class="modal-close" onclick="closeModal('rechargeModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+        <p style="color: #888; font-size: 0.85rem; margin-bottom: 15px; text-align: center;">Get coins to send gifts and support your favorite creators.</p>
+        <div class="coin-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            {% for pkg in coin_packages %}
+            <div class="coin-item" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; padding: 15px; text-align: center; cursor: pointer; transition: all 0.2s;">
+                <div style="color: #FFD700; font-size: 1.5rem; margin-bottom: 5px;"><i class="fa-solid fa-coins"></i></div>
+                <div style="font-weight: bold; font-size: 1.1rem;">{{ pkg.coin_amount }}</div>
+                {% if pkg.bonus_coins > 0 %}
+                <div style="font-size: 0.7rem; color: #4CAF50; font-weight: bold; margin-bottom: 8px;">+{{ pkg.bonus_coins }} BONUS</div>
+                {% endif %}
+                <button style="background: #ff0050; border: none; color: white; width: 100%; border-radius: 12px; padding: 6px 0; font-weight: bold; font-size: 0.9rem;">${{ pkg.price }}</button>
+            </div>
+            {% empty %}
+            <div style="grid-column: span 2; text-align: center; color: #555; padding: 20px;">No coin packages available</div>
+            {% endfor %}
+        </div>
+</div>
+
+<!-- Profile Modal (Bottom Sheetized) -->
+<div class="bottom-sheet-modal" id="profileModal" style="z-index: 1010;">
+    <div class="modal-header" style="border: none;">
+        <h3 class="modal-title">Creator Profile</h3>
+        <button class="modal-close" onclick="closeModal('profileModal')">&times;</button>
+    </div>
+    <div class="modal-body" style="padding-top: 0;">
+        <div class="profile-header-modal" style="text-align: center; margin-bottom: 20px;">
+            <div class="profile-avatar-container" style="margin: 0 auto 15px; position: relative; width: 100px; height: 100px;">
+                <img id="modalAvatar" src="" style="width: 100%; height: 100%; border-radius: 50%; border: 3px solid #ff0050; object-fit: cover;">
+            </div>
+            <h4 id="modalUsername" style="font-weight: 800; margin-bottom: 5px; color: white;"></h4>
+            <p id="modalBio" style="color: #aaa; font-size: 0.9rem; max-width: 80%; margin: 0 auto; min-height: 1.2rem;"></p>
+        </div>
+
+        <!-- Sync Layout: Stats Row (Following, Followers, Likes) -->
+        <div class="stats-row-modal" style="display: flex; justify-content: center; gap: 40px; margin-bottom: 25px;">
+            <div class="stat-item-modal" style="text-align: center;">
+                <div id="modalFollowingCount" style="font-weight: 800; font-size: 1.1rem; color: white;">0</div>
+                <div style="font-size: 0.75rem; color: #777; font-weight: 600;">Following</div>
+            </div>
+            <div class="stat-item-modal" style="text-align: center;">
+                <div id="modalFollowersCount" style="font-weight: 800; font-size: 1.1rem; color: white;">0</div>
+                <div style="font-size: 0.75rem; color: #777; font-weight: 600;">Followers</div>
+            </div>
+            <div class="stat-item-modal" style="text-align: center;">
+                <div id="modalLikesCount" style="font-weight: 800; font-size: 1.1rem; color: white;">0</div>
+                <div style="font-size: 0.75rem; color: #777; font-weight: 600;">Likes</div>
+            </div>
+        </div>
+
+        <!-- Action Row (Copy Link, History, Follow) -->
+        <div class="action-row-modal" style="display: flex; flex-direction: column; gap: 12px;">
+            <div style="display: flex; gap: 10px;">
+                <button id="modalFollowBtn" onclick="toggleFollowModal()" 
+                    style="flex: 2; background: #ff0050; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: 800;">Follow</button>
+                <div id="modalCopyBtn" onclick="copyProfileLinkModal()"
+                    style="flex: 1; background: rgba(255,255,255,0.1); color: white; display: flex; align-items: center; justify-content: center; border-radius: 12px; cursor: pointer;">
+                    <span class="material-symbols-outlined">link</span>
+                </div>
+            </div>
+            <button onclick="window.location.href='/profile/history/'" 
+                style="background: rgba(255,255,255,0.05); color: #ccc; border: 1px solid rgba(255,255,255,0.1); padding: 10px; border-radius: 12px; font-weight: 600; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <span class="material-symbols-outlined" style="font-size: 18px;">history</span>
+                View Content History
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openModal(id) {
+        document.getElementById('modalOverlay').classList.add('active');
+        document.getElementById(id).classList.add('active');
+    }
+
+    function closeModal(id) {
+        document.getElementById('modalOverlay').classList.remove('active');
+        document.getElementById(id).classList.remove('active');
+    }
+
+    let currentModalUser = "";
+
+    function openProfileModal(username, avatar, title, following, followers, likes) {
+        currentModalUser = username;
+        document.getElementById('modalUsername').innerText = '@' + username;
+        document.getElementById('modalAvatar').src = avatar;
+        document.getElementById('modalBio').innerText = title || "No bio available";
+        
+        // Populate stats if available, otherwise use randomized/mock data
+        document.getElementById('modalFollowingCount').innerText = following || Math.floor(Math.random() * 500);
+        document.getElementById('modalFollowersCount').innerText = followers || Math.floor(Math.random() * 10000);
+        document.getElementById('modalLikesCount').innerText = likes || Math.floor(Math.random() * 50000);
+
+        openModal('profileModal');
+    }
+
+    function copyProfileLinkModal() {
+        const link = window.location.origin + "/public_profile/?uid=" + currentModalUser;
+        navigator.clipboard.writeText(link);
+        const btn = document.getElementById('modalCopyBtn');
+        const oldContent = btn.innerHTML;
+        btn.innerHTML = '<span class="material-symbols-outlined" style="color: #4CAF50;">check</span>';
+        setTimeout(() => { btn.innerHTML = oldContent; }, 2000);
+    }
+
+    document.getElementById('modalOverlay').addEventListener('click', function () {
+        this.classList.remove('active');
+        document.querySelectorAll('.bottom-sheet-modal').forEach(m => m.classList.remove('active'));
+    });
+
+
+    // --- Chat Input & Emote Functionality ---
+    function toggleEmoteDrawer() {
+        document.getElementById('emoteDrawer').classList.toggle('active');
+    }
+
+    function addEmote(emoji) {
+        const input = document.getElementById('chatInput');
+        if (input) {
+            input.value += emoji;
+            input.focus();
+        }
+    }
+
+    function sendMockComment() {
+        const input = document.getElementById('chatInput');
+        if (!input) return;
+
+        const text = input.value.trim();
+        if (!text) return; // Don't send empty
+
+        const chatBox = document.getElementById('commentsBox');
+
+        // Close drawer if open
+        const drawer = document.getElementById('emoteDrawer');
+        if (drawer) drawer.classList.remove('active');
+
+        // Build new floating comment DOM
+        const newMsgRow = document.createElement('div');
+        newMsgRow.className = 'floating-comment';
+
+        newMsgRow.innerHTML = `
+            <img src="https://ui-avatars.com/api/?name=U&background=random" class="comment-avatar" alt="Avatar">
+            <div class="comment-content">
+                <span class="comment-author">You:</span>
+                <span>${text}</span>
+            </div>
+        `;
+
+        if (chatBox) {
+            chatBox.appendChild(newMsgRow);
+            // Scroll to bottom gracefully
+            chatBox.scrollTo({
+                top: chatBox.scrollHeight,
+                behavior: 'smooth'
+            });
+        }
+
+        // Clear input
+        input.value = '';
+    }
+
+    // --- Gift & Share Interactions ---
+    function shareStreamLink() {
+        if (navigator.share) {
+            navigator.share({
+                title: 'LivKit Stream',
+                text: 'Check out this awesome live stream!',
+                url: window.location.href,
+            }).catch((error) => console.log('Error sharing', error));
+        } else {
+            copyLivKitLink();
+        }
+        closeModal('shareModal');
+    }
+
+    function copyLivKitLink() {
+        navigator.clipboard.writeText(window.location.href);
+        alert("Live link copied to clipboard!");
+        closeModal('shareModal');
+    }
+
+    function sendGift(giftDisplay, giftId, amount) {
+        // Find the active stream from the feed
+        if (!activeStreamId) {
+            console.error("No active stream detected");
+            return;
+        }
+
+        // --- REAL API CALL ---
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]') ? document.querySelector('[name=csrfmiddlewaretoken]').value : "";
+        
+        fetch(`/api/streaming/${activeStreamId}/gift/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ amount: amount })
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(data => { throw new Error(data.error || "Insufficient balance") });
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Update balance UI
+            const balanceElem = document.getElementById('giftBalance');
+            if (balanceElem) {
+                balanceElem.innerHTML = `<i class="fa-solid fa-coins"></i> ${data.new_balance}`;
+            }
+
+            // Trigger Animation only on success
+            triggerGiftAnimation(giftDisplay, giftId);
+        })
+        .catch(err => {
+            console.error("Gift Send Error:", err);
+            alert(err.message);
+        });
+    }
+
+    function triggerGiftAnimation(giftDisplay, giftId) {
+        // Use ID/Name for tracking combos, but the HTML for display
+        const comboKey = giftId || giftDisplay;
+
+        // Initialize or increment combo count
+        if (!giftComboCounts[comboKey]) {
+            giftComboCounts[comboKey] = 1;
+        } else {
+            giftComboCounts[comboKey]++;
+        }
+
+        const combo = giftComboCounts[comboKey];
+
+        // Reset combo count after a moment of inactivity
+        clearTimeout(giftTimers[comboKey]);
+        giftTimers[comboKey] = setTimeout(() => {
+            giftComboCounts[comboKey] = 0;
+        }, 3000);
+
+        // Find the feed item container
+        const feedItem = document.querySelector('.feed-item');
+        if (!feedItem) return;
+
+        // Create the floating gift animation
+        const animElem = document.createElement('div');
+        animElem.className = 'floating-gift-anim';
+
+        animElem.innerHTML = `
+            ${giftDisplay} 
+            ${combo > 1 ? '<div class="combo-text">x' + combo + '</div>' : ''}
+        `;
+
+        feedItem.appendChild(animElem);
+
+        // Remove the element after animation completes
+        setTimeout(() => {
+            if (animElem.parentNode) {
+                animElem.parentNode.removeChild(animElem);
+            }
+        }, 1500);
+    }
+
+    // Allow Enter key to trigger send on input
+    document.addEventListener("DOMContentLoaded", function () {
+        const chatInput = document.getElementById("chatInput");
+        if (chatInput) {
+            chatInput.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') {
+                    sendMockComment();
+                }
+            });
+        }
+
+        const commentsBox = document.getElementById("commentsBox");
+        if (commentsBox) {
+            commentsBox.scrollTop = commentsBox.scrollHeight;
+        }
+
+        // --- Stream Observer to track which post is being viewed ---
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.6
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    activeStreamId = entry.target.getAttribute('data-streamid');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.feed-item').forEach(item => {
+            observer.observe(item);
+        });
+    });
+    let giftComboCounts = {};
+    let giftTimers = {};
+    let activeStreamId = null;
+
+    function sendGiftFromElement(elem) {
+        const display = elem.getAttribute('data-display');
+        const id = elem.getAttribute('data-id');
+        const amount = parseInt(elem.getAttribute('data-amount'));
+        sendGift(display, id, amount);
+    }
+</script>
+{% endblock %}

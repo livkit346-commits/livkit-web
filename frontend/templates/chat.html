@@ -1,0 +1,713 @@
+{% extends 'mobile_base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .chat-wrapper {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        height: calc(100dvh - 75px);
+        background-color: black;
+        color: white;
+        overflow-y: auto;
+        scrollbar-width: none;
+        /* Firefox */
+    }
+
+    .chat-wrapper::-webkit-scrollbar {
+        display: none;
+        /* Chrome */
+    }
+
+    /* AppBar */
+    .chat-appbar {
+        padding: 15px 20px;
+        font-size: 1.25rem;
+        font-weight: 600;
+        background-color: black;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    /* Add Friends Status Section */
+    .status-section {
+        height: 95px;
+        display: flex;
+        align-items: center;
+        padding: 0 10px;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+
+    .status-section::-webkit-scrollbar {
+        display: none;
+    }
+
+    .status-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-right: 12px;
+        cursor: pointer;
+    }
+
+    .status-avatar {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background-color: #2196F3;
+        /* Colors.blue */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 5px;
+    }
+
+    .status-avatar .material-symbols-outlined {
+        color: white;
+        font-size: 28px;
+    }
+
+    .status-name {
+        font-size: 12px;
+        color: white;
+    }
+
+    .section-divider {
+        height: 1px;
+        background-color: rgba(255, 255, 255, 0.12);
+        margin: 5px 0;
+    }
+
+    /* Pending Requests Card */
+    .pending-requests-card {
+        margin: 6px 10px;
+        padding: 12px;
+        background-color: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+    }
+
+    .pending-icon-wrap {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background-color: #FF9800;
+        /* Colors.orange */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 12px;
+    }
+
+    .pending-icon-wrap .material-symbols-outlined {
+        color: white;
+    }
+
+    .pending-text-col {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .pending-title {
+        font-weight: bold;
+        color: white;
+        margin-bottom: 4px;
+        font-size: 0.95rem;
+    }
+
+    .pending-subtitle {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 13px;
+    }
+
+    .pending-arrow {
+        color: rgba(255, 255, 255, 0.38);
+        font-size: 16px;
+    }
+
+    /* Chat List */
+    .chat-list {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .chat-item {
+        display: flex;
+        padding: 12px 16px;
+        align-items: center;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    .chat-item:active {
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+
+    .chat-item-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background-color: #9C27B0;
+        /* Random color */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 15px;
+        font-weight: bold;
+        font-size: 1.1rem;
+    }
+
+    .chat-item-avatar img {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    .chat-item-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .chat-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 4px;
+    }
+
+    .chat-name {
+        font-weight: bold;
+        color: white;
+        font-size: 1rem;
+    }
+
+    .chat-time {
+        color: rgba(255, 255, 255, 0.38);
+        font-size: 11px;
+    }
+
+    .chat-message {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.9rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 250px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="chat-wrapper">
+    <!-- AppBar -->
+    <div class="chat-appbar">
+        Messages
+    </div>
+
+    <!-- Status / Stories Section -->
+    <div class="status-section" id="story-section-container">
+        <!-- My Status / Add Status -->
+        <div class="status-item" id="my-status-btn">
+            <div class="status-avatar" style="background-color: #333; position: relative;">
+                <img src="https://ui-avatars.com/api/?name={{ user.username }}&background=random" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">
+                <div style="position: absolute; bottom: 0; right: 0; background: #2196F3; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; border: 2px solid black;">
+                    <span class="material-symbols-outlined" style="font-size: 14px; color: white;">add</span>
+                </div>
+            </div>
+            <span class="status-name" style="color: rgba(255,255,255,0.7);">My status</span>
+        </div>
+        <input type="file" id="status-upload-input" accept="image/*,video/*" style="display: none;">
+
+        <div id="friends-story-list" style="display: flex;">
+            <!-- Friends' statuses will be dynamically loaded here -->
+        </div>
+    </div>
+
+    <div class="section-divider"></div>
+
+    <!-- Pending Requests -->
+    <div id="pending-requests-section" style="display: none;">
+        <div class="pending-requests-card" onclick="location.href='/search'"> <!-- Search page handles requests too -->
+            <div class="pending-icon-wrap">
+                <span class="material-symbols-outlined">person_outline</span>
+            </div>
+            <div class="pending-text-col">
+                <span class="pending-title">Pending Friend Requests</span>
+                <span class="pending-subtitle" id="pending-count-text">0 new requests</span>
+            </div>
+            <span class="material-symbols-outlined pending-arrow">arrow_forward_ios</span>
+        </div>
+    </div>
+
+    <!-- Chat List -->
+    <div class="chat-list" id="chat-list-container">
+        <!-- Conversations will be loaded here -->
+        <div style="padding: 40px; text-align: center; color: rgba(255,255,255,0.5);">
+            <div class="spinner-border spinner-border-sm mb-2" role="status"></div>
+            <div>Loading conversations...</div>
+        </div>
+    </div>
+</div>
+
+<!-- Search Modal (Simple) -->
+<div class="modal fade" id="searchModal" tabindex="-1" style="background: rgba(0,0,0,0.8);">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0" style="background: #1a1a1a; color: white; border-radius: 20px;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title">Search Friends</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group mb-3" style="background: #333; border-radius: 12px; padding: 5px;">
+                    <span class="input-group-text bg-transparent border-0"><span class="material-symbols-outlined text-white-50">search</span></span>
+                    <input type="text" id="userSearchInput" class="form-control bg-transparent border-0 text-white" placeholder="Search by username...">
+                </div>
+                <div id="searchResults" class="mt-3">
+                    <!-- Search results here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Full Screen Story Viewer Modal -->
+<div id="storyViewerModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: black; z-index: 9999; flex-direction: column;">
+    <!-- Progress Bars container -->
+    <div id="story-progress-container" style="display: flex; gap: 4px; padding: 15px 10px 5px 10px; position: absolute; top: 0; width: 100%; z-index: 10;">
+    </div>
+
+    <!-- Header info -->
+    <div style="display: flex; align-items: center; padding: 5px 10px; position: absolute; top: 25px; width: 100%; z-index: 10;">
+        <img id="story-avatar" src="" style="width: 40px; height: 40px; border-radius: 50%; margin-right: 10px;">
+        <div style="flex: 1;">
+            <div id="story-username" style="color: white; font-weight: bold; font-size: 14px;">Username</div>
+            <div id="story-time" style="color: rgba(255,255,255,0.7); font-size: 12px;">time</div>
+        </div>
+        <span class="material-symbols-outlined" style="color: white; cursor: pointer; text-shadow: 0px 0px 5px black;" onclick="closeStoryViewer()">close</span>
+    </div>
+
+    <!-- Media Container (click right/left to advance) -->
+    <div style="flex: 1; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+        <!-- Tap zones -->
+        <div style="position: absolute; left: 0; top: 0; width: 30%; height: 100%; z-index: 5;" onclick="prevStory()"></div>
+        <div style="position: absolute; right: 0; top: 0; width: 70%; height: 100%; z-index: 5;" onclick="nextStory()"></div>
+        
+        <img id="story-img-viewer" style="display: none; max-width: 100%; max-height: 100%; object-fit: contain;">
+        <video id="story-vid-viewer" style="display: none; max-width: 100%; max-height: 100%; object-fit: contain;" playsinline autoplay muted></video>
+        <div id="story-text-viewer" style="display: none; width: 100%; height: 100%; background: #9C27B0; color: white; display: flex; align-items: center; justify-content: center; font-size: 24px; padding: 20px; text-align: center; font-weight: bold; word-break: break-word;"></div>
+    </div>
+</div>
+
+<script>
+async function loadConversations() {
+    try {
+        const response = await fetch('/api/chat/conversations/', {
+            headers: {
+                'Authorization': `Bearer ${getCookie('access')}`
+            }
+        });
+        const data = await response.json();
+        const container = document.getElementById('chat-list-container');
+        
+        if (data.results && data.results.length > 0) {
+            container.innerHTML = '';
+            data.results.forEach(conv => {
+                const item = document.createElement('div');
+                item.className = 'chat-item';
+                item.onclick = () => location.href = `/chat/${conv.id}/`;
+                
+                // Get other participant display data
+                let title = conv.title;
+                let avatar = `https://ui-avatars.com/api/?name=${title}&background=random`;
+                
+                if (conv.type === 'PRIVATE') {
+                    // Title for private chats is usually the other user
+                }
+
+                item.innerHTML = `
+                    <div class="chat-item-avatar">
+                        <img src="${avatar}" alt="Avatar">
+                    </div>
+                    <div class="chat-item-content">
+                        <div class="chat-header">
+                            <span class="chat-name">${title}</span>
+                            <span class="chat-time">${formatChatTime(conv.last_message_at)}</span>
+                        </div>
+                        <div class="chat-message">${conv.last_message ? (conv.last_message.content.text || conv.last_message.content) : 'No messages yet'}</div>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        } else {
+            container.innerHTML = `
+                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding-top: 100px;">
+                    <span class="material-symbols-outlined" style="font-size: 48px; color: rgba(255,255,255,0.2); margin-bottom: 10px;">chat_bubble_outline</span>
+                    <span style="color: rgba(255,255,255,0.5);">No conversations yet</span>
+                    <button class="btn btn-primary btn-sm mt-3" style="border-radius: 20px;" onclick="openSearchModal()">Start a Chat</button>
+                </div>
+            `;
+        }
+    } catch (e) {
+        console.error("Load Conversations Error:", e);
+    }
+}
+
+async function loadPendingCount() {
+    try {
+        const response = await fetch('/api/chat/requests/', {
+            headers: { 'Authorization': `Bearer ${getCookie('access')}` }
+        });
+        const data = await response.json();
+        if (data.pending_requests && data.pending_requests.length > 0) {
+            document.getElementById('pending-requests-section').style.display = 'block';
+            document.getElementById('pending-count-text').innerText = `${data.pending_requests.length} new request${data.pending_requests.length > 1 ? 's' : ''}`;
+        }
+    } catch (e) {}
+}
+
+function formatChatTime(dateStr) {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diff = now - date;
+    
+    if (diff < 86400000 && now.getDate() === date.getDate()) {
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } else if (diff < 172800000) {
+        return 'Yesterday';
+    } else {
+        return date.toLocaleDateString();
+    }
+}
+
+function openSearchModal() {
+    const modal = new bootstrap.Modal(document.getElementById('searchModal'));
+    modal.show();
+}
+
+// --- 24-HOUR STATUS LOGIC (WHATSAPP-STYLE) ---
+let globalStatuses = [];
+let storyUserGroupIndex = 0;
+let storyIndex = 0;
+let storyTimer = null;
+let currentStoryDuration = 5000; // 5 seconds default
+
+async function loadStatuses() {
+    try {
+        const response = await fetch('/api/chat/statuses/', {
+            headers: { 'Authorization': `Bearer ${getCookie('access')}` }
+        });
+        const data = await response.json();
+        globalStatuses = data.results || [];
+        
+        const listContainer = document.getElementById('friends-story-list');
+        listContainer.innerHTML = '';
+
+        let hasMyStatus = false;
+
+        globalStatuses.forEach((userGroup, gIndex) => {
+            if (userGroup.is_me) {
+                hasMyStatus = true;
+                const myBtn = document.getElementById('my-status-btn');
+                myBtn.innerHTML = `
+                    <div class="status-avatar" style="padding: 2px; background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);">
+                        <img src="${userGroup.user.avatar}" style="width:100%; height:100%; border-radius:50%; border: 2px solid black; object-fit:cover;">
+                    </div>
+                    <span class="status-name" style="color: white;">My status</span>
+                `;
+                myBtn.onclick = () => openStoryViewer(gIndex, 0);
+            } else {
+                const item = document.createElement('div');
+                item.className = 'status-item';
+                item.onclick = () => openStoryViewer(gIndex, 0);
+                item.innerHTML = `
+                    <div class="status-avatar" style="padding: 2px; background: #2196F3;">
+                        <img src="${userGroup.user.avatar}" style="width:100%; height:100%; border-radius:50%; border: 2px solid black; object-fit:cover;">
+                    </div>
+                    <span class="status-name">${userGroup.user.username}</span>
+                `;
+                listContainer.appendChild(item);
+            }
+        });
+
+        if (!hasMyStatus) {
+            document.getElementById('my-status-btn').onclick = triggerStatusUpload;
+        }
+
+        // Add the "Add Friends" button statically at the end
+        const addFriendBtn = document.createElement('div');
+        addFriendBtn.className = 'status-item';
+        addFriendBtn.onclick = openSearchModal;
+        addFriendBtn.innerHTML = `
+            <div class="status-avatar" style="background: #333; border: 1px solid rgba(255,255,255,0.2);">
+                <span class="material-symbols-outlined" style="font-size: 24px; color: white;">person_add</span>
+            </div>
+            <span class="status-name" style="color: rgba(255,255,255,0.7);">Add Friends</span>
+        `;
+        listContainer.appendChild(addFriendBtn);
+
+    } catch(err) { console.error("Load Status Error", err); }
+}
+
+function triggerStatusUpload() {
+    document.getElementById('status-upload-input').click();
+}
+
+document.getElementById('status-upload-input').onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const btn = document.getElementById('my-status-btn');
+    btn.style.opacity = '0.5';
+
+    try {
+        const response = await fetch('/api/chat/statuses/upload/', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${getCookie('access')}` },
+            body: formData
+        });
+        if (response.ok) {
+            loadStatuses(); // Reload ring
+        } else {
+            alert('Status upload failed!');
+        }
+    } catch(err) { console.error(err); }
+    btn.style.opacity = '1';
+    e.target.value = '';
+};
+
+// ---------------------------
+// STORY VIEWER LOGIC 
+// ---------------------------
+function openStoryViewer(groupIndex, itemIndex) {
+    if (!globalStatuses[groupIndex] || !globalStatuses[groupIndex].statuses.length) return;
+    
+    storyUserGroupIndex = groupIndex;
+    storyIndex = itemIndex;
+
+    document.getElementById('storyViewerModal').style.display = 'flex';
+    renderCurrentStory();
+}
+
+function renderCurrentStory() {
+    clearTimeout(storyTimer);
+    
+    const group = globalStatuses[storyUserGroupIndex];
+    if (!group) return closeStoryViewer();
+    const story = group.statuses[storyIndex];
+    if (!story) return nextStoryGroup();
+
+    // Set UI User Info
+    document.getElementById('story-avatar').src = group.user.avatar;
+    document.getElementById('story-username').innerText = group.user.username;
+    document.getElementById('story-time').innerText = formatChatTime(story.created_at);
+
+    // Render Progress Bars
+    const progressContainer = document.getElementById('story-progress-container');
+    progressContainer.innerHTML = '';
+    group.statuses.forEach((_, idx) => {
+        const barWrap = document.createElement('div');
+        barWrap.style.flex = '1';
+        barWrap.style.height = '3px';
+        barWrap.style.background = 'rgba(255,255,255,0.3)';
+        barWrap.style.borderRadius = '2px';
+        barWrap.style.overflow = 'hidden';
+
+        const fill = document.createElement('div');
+        fill.style.height = '100%';
+        fill.style.background = 'white';
+        fill.style.transition = 'width 0.1s linear';
+        
+        if (idx < storyIndex) fill.style.width = '100%';
+        else if (idx > storyIndex) fill.style.width = '0%';
+        else {
+            fill.id = 'active-progress-fill';
+            fill.style.width = '0%';
+        }
+        barWrap.appendChild(fill);
+        progressContainer.appendChild(barWrap);
+    });
+
+    // Handle Media
+    const imgEl = document.getElementById('story-img-viewer');
+    const vidEl = document.getElementById('story-vid-viewer');
+    const txtEl = document.getElementById('story-text-viewer');
+    imgEl.style.display = 'none'; vidEl.style.display = 'none'; txtEl.style.display = 'none';
+
+    currentStoryDuration = 5000; // default for images
+    let durationAccumulator = 0;
+
+    if (story.type === 'IMAGE') {
+        imgEl.style.display = 'block';
+        imgEl.src = story.url;
+        startProgressBar();
+    } else if (story.type === 'VIDEO') {
+        vidEl.style.display = 'block';
+        vidEl.src = story.url;
+        vidEl.onloadedmetadata = () => {
+            currentStoryDuration = vidEl.duration * 1000 || 5000;
+            startProgressBar();
+        };
+        vidEl.play();
+    } else {
+        txtEl.style.display = 'flex';
+        txtEl.innerText = story.text;
+        startProgressBar();
+    }
+
+    function startProgressBar() {
+        const fill = document.getElementById('active-progress-fill');
+        const interval = 50; 
+        durationAccumulator = 0;
+        
+        storyTimer = setInterval(() => {
+            durationAccumulator += interval;
+            const pct = (durationAccumulator / currentStoryDuration) * 100;
+            if (fill) fill.style.width = `${Math.min(pct, 100)}%`;
+
+            if (durationAccumulator >= currentStoryDuration) {
+                clearInterval(storyTimer);
+                nextStory();
+            }
+        }, interval);
+    }
+}
+
+function nextStory() {
+    storyIndex++;
+    if (globalStatuses[storyUserGroupIndex] && storyIndex >= globalStatuses[storyUserGroupIndex].statuses.length) {
+        nextStoryGroup();
+    } else {
+        renderCurrentStory();
+    }
+}
+
+function prevStory() {
+    storyIndex--;
+    if (storyIndex < 0) {
+        storyUserGroupIndex--;
+        if (storyUserGroupIndex < 0) {
+            closeStoryViewer();
+        } else {
+            storyIndex = Math.max(0, globalStatuses[storyUserGroupIndex].statuses.length - 1);
+            renderCurrentStory();
+        }
+    } else {
+        renderCurrentStory();
+    }
+}
+
+function nextStoryGroup() {
+    storyUserGroupIndex++;
+    storyIndex = 0;
+    if (storyUserGroupIndex >= globalStatuses.length) {
+        closeStoryViewer();
+    } else {
+        renderCurrentStory();
+    }
+}
+
+function closeStoryViewer() {
+    clearTimeout(storyTimer);
+    document.getElementById('storyViewerModal').style.display = 'none';
+    const vidEl = document.getElementById('story-vid-viewer');
+    vidEl.pause();
+    vidEl.src = '';
+}
+
+// Init
+document.addEventListener('DOMContentLoaded', () => {
+    loadConversations();
+    loadStatuses();
+    loadPendingCount();
+    
+    // Search logic
+    document.getElementById('userSearchInput').oninput = debounce(async (e) => {
+        const query = e.target.value;
+        if (query.length < 2) return;
+        
+        const response = await fetch(`/api/chat/search/?q=${query}`);
+        const data = await response.json();
+        const resultsBox = document.getElementById('searchResults');
+        resultsBox.innerHTML = '';
+        
+        data.results.forEach(user => {
+            const row = document.createElement('div');
+            row.className = 'd-flex align-items-center mb-3 p-2';
+            row.style.background = 'rgba(255,255,255,0.05)';
+            row.style.borderRadius = '12px';
+            row.innerHTML = `
+                <img src="https://ui-avatars.com/api/?name=${user.username}" style="width: 40px; height: 40px; border-radius: 50%; margin-right: 12px;">
+                <div style="flex: 1;">
+                    <div class="fw-bold">${user.username}</div>
+                </div>
+                <button class="btn btn-sm btn-outline-primary" style="border-radius: 12px;" onclick="addFriend(${user.id}, this)">Add</button>
+            `;
+            resultsBox.appendChild(row);
+        });
+    }, 500);
+});
+
+async function addFriend(userId, btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner-border spinner-border-sm"></span>`;
+    const response = await fetch('/api/chat/request/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${getCookie('access')}`
+        },
+        body: JSON.stringify({ user_id: userId })
+    });
+    const data = await response.json();
+    if (data.success) {
+        btn.innerHTML = 'Sent';
+        btn.className = 'btn btn-sm btn-success disabled';
+    } else {
+        btn.innerHTML = 'Add';
+        btn.disabled = false;
+        alert(data.error || 'Failed to send request');
+    }
+}
+
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

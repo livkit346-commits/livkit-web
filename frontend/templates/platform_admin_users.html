@@ -1,0 +1,134 @@
+{% extends 'platform_admin_base.html' %}
+{% load static %}
+
+{% block header_title %}User Management{% endblock %}
+
+{% block content %}
+<div class="stat-card p-0 overflow-hidden">
+    <!-- Search and Filters -->
+    <div class="p-4 border-bottom" style="border-color: rgba(255,255,255,0.1) !important; background: rgba(0,0,0,0.2);">
+        <form method="GET" action="{% url 'platform_admin_users' %}">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-secondary text-white-50"><span class="material-symbols-outlined fs-5">search</span></span>
+                        <input type="text" name="q" value="{{ request.GET.q|default:'' }}" class="form-control bg-transparent text-white border-secondary shadow-none" placeholder="Search by username, email...">
+                        <button type="submit" class="btn btn-primary" style="background-color: #7C4DFF; border: none;">Search</button>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select name="status" class="form-select bg-transparent text-white border-secondary shadow-none">
+                        <option value="" class="text-dark" {% if not request.GET.status %}selected{% endif %}>All Statuses</option>
+                        <option value="active" class="text-dark" {% if request.GET.status == 'active' %}selected{% endif %}>Active</option>
+                        <option value="suspended" class="text-dark" {% if request.GET.status == 'suspended' %}selected{% endif %}>Suspended</option>
+                        <option value="banned" class="text-dark" {% if request.GET.status == 'banned' %}selected{% endif %}>Banned</option>
+                    </select>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Users Table -->
+    <div class="table-responsive">
+        <table class="table table-dark table-hover align-middle mb-0" style="background: transparent;">
+            <thead>
+                <tr style="border-bottom: 2px solid rgba(255,255,255,0.1);">
+                    <th scope="col" class="bg-transparent border-0 text-white-50 py-3 ps-4">User</th>
+                    <th scope="col" class="bg-transparent border-0 text-white-50 py-3">Status</th>
+                    <th scope="col" class="bg-transparent border-0 text-white-50 py-3">Joined</th>
+                    <th scope="col" class="bg-transparent border-0 text-white-50 py-3 text-end pe-4">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for target_user in users %}
+                <tr style="border-color: rgba(255,255,255,0.05);">
+                    <td class="bg-transparent py-3 ps-4">
+                        <div class="d-flex align-items-center gap-3">
+                            <img src="{% if target_user.userprofile.avatar %}{{ target_user.userprofile.avatar.url }}{% else %}https://ui-avatars.com/api/?name={{ target_user.username }}&background=random{% endif %}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+                            <div>
+                                <div class="fw-bold">{{ target_user.userprofile.display_name|default:target_user.username }}</div>
+                                <div class="text-white-50" style="font-size: 0.85rem;">@{{ target_user.username }} • {{ target_user.email }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="bg-transparent py-3">
+                        {% if not target_user.is_active %}
+                            <span class="badge bg-danger rounded-pill">Banned</span>
+                        {% else %}
+                            <span class="badge bg-success bg-opacity-10 text-success rounded-pill">Active</span>
+                        {% endif %}
+                    </td>
+                    <td class="bg-transparent py-3 text-white-50" style="font-size: 0.9rem;">
+                        {{ target_user.date_joined|date:"M d, Y" }}
+                    </td>
+                    <td class="bg-transparent py-3 text-end pe-4">
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Manage
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end shadow">
+                                <li><a class="dropdown-item d-flex align-items-center gap-2" href="{% url 'public_profile' target_user.username %}" target="_blank"><span class="material-symbols-outlined fs-6">visibility</span> View Profile</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                {% if target_user.is_active %}
+                                    <!-- Use a form to POST the ban action -->
+                                    <form method="POST" action="{% url 'platform_admin_toggle_user' %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="user_id" value="{{ target_user.id }}">
+                                        <input type="hidden" name="action" value="ban">
+                                        <button type="submit" class="dropdown-item d-flex align-items-center gap-2 text-danger"><span class="material-symbols-outlined fs-6">block</span> Ban User</button>
+                                    </form>
+                                {% else %}
+                                    <form method="POST" action="{% url 'platform_admin_toggle_user' %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="user_id" value="{{ target_user.id }}">
+                                        <input type="hidden" name="action" value="unban">
+                                        <button type="submit" class="dropdown-item d-flex align-items-center gap-2 text-success"><span class="material-symbols-outlined fs-6">check_circle</span> Unban User</button>
+                                    </form>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center py-5 text-white-50 bg-transparent">
+                        <span class="material-symbols-outlined" style="font-size: 40px; margin-bottom: 10px; opacity: 0.5;">search_off</span>
+                        <p>No users found matching your criteria.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Pagination (Optional for future) -->
+{% if is_paginated %}
+<nav class="mt-4">
+    <ul class="pagination justify-content-center" data-bs-theme="dark">
+        {% if page_obj.has_previous %}
+        <li class="page-item"><a class="page-link bg-transparent text-white border-secondary" href="?page={{ page_obj.previous_page_number }}&q={{ request.GET.q }}&status={{ request.GET.status }}">Previous</a></li>
+        {% endif %}
+        
+        <li class="page-item active"><span class="page-link" style="background-color: #7C4DFF; border-color: #7C4DFF;">{{ page_obj.number }}</span></li>
+        
+        {% if page_obj.has_next %}
+        <li class="page-item"><a class="page-link bg-transparent text-white border-secondary" href="?page={{ page_obj.next_page_number }}&q={{ request.GET.q }}&status={{ request.GET.status }}">Next</a></li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+<style>
+    /* Table specific overrides */
+    .table-dark {
+        --bs-table-bg: transparent;
+        --bs-table-color: white;
+        --bs-table-hover-bg: rgba(255, 255, 255, 0.05);
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #7C4DFF;
+        box-shadow: 0 0 0 0.25rem rgba(124, 77, 255, 0.25);
+    }
+</style>
+{% endblock %}

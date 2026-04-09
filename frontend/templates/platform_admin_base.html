@@ -1,0 +1,239 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin Dashboard | LivKit{% endblock %}</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Material Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <style>
+        body {
+            background-color: #0d0d0d;
+            color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        /* Sidebar Styling */
+        .admin-sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 250px;
+            background-color: #000000;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 20px;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-brand {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            padding: 0 20px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+            text-decoration: none;
+        }
+
+        .sidebar-nav-link {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px 20px;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .sidebar-nav-link:hover, .sidebar-nav-link.active {
+            background-color: rgba(255, 255, 255, 0.05);
+            color: white;
+            border-left: 4px solid #7C4DFF;
+        }
+
+        .sidebar-nav-link .material-symbols-outlined {
+            font-size: 22px;
+        }
+
+        /* Main Content Area */
+        .admin-main-content {
+            margin-left: 250px;
+            min-height: 100vh;
+            padding: 20px 40px;
+        }
+
+        /* Header / Top Bar */
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .header-title {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .header-icon {
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .header-icon:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Reuse Wallet Styling for Admin Cards */
+        .premium-card {
+            background: linear-gradient(135deg, #7C4DFF 0%, #448AFF 100%);
+            border-radius: 20px;
+            padding: 25px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(124, 77, 255, 0.3);
+            color: white;
+        }
+
+        .premium-card::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 150px;
+            height: 150px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 50%;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .admin-sidebar {
+                transform: translateX(-100%);
+            }
+            .admin-sidebar.show {
+                transform: translateX(0);
+            }
+            .admin-main-content {
+                margin-left: 0;
+                padding: 15px;
+            }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <nav class="admin-sidebar" id="sidebar">
+        <a href="{% url 'platform_admin_overview' %}" class="sidebar-brand">
+            <span class="material-symbols-outlined" style="color: #7C4DFF;">shield</span>
+            LivKit Admin
+        </a>
+
+        <a href="{% url 'platform_admin_overview' %}" class="sidebar-nav-link {% if request.resolver_match.url_name == 'platform_admin_overview' %}active{% endif %}">
+            <span class="material-symbols-outlined">dashboard</span>
+            Dashboard
+        </a>
+        <a href="{% url 'platform_admin_users' %}" class="sidebar-nav-link {% if request.resolver_match.url_name == 'platform_admin_users' %}active{% endif %}">
+            <span class="material-symbols-outlined">group</span>
+            Users & Creators
+        </a>
+        <a href="{% url 'platform_admin_wallets' %}" class="sidebar-nav-link {% if request.resolver_match.url_name == 'platform_admin_wallets' %}active{% endif %}">
+            <span class="material-symbols-outlined">account_balance_wallet</span>
+            Wallets & Payouts
+        </a>
+        <a href="{% url 'platform_admin_subscriptions' %}" class="sidebar-nav-link {% if 'subscription' in request.resolver_match.url_name %}active{% endif %}">
+            <span class="material-symbols-outlined">monetization_on</span>
+            Monetization Config
+        </a>
+        <a href="#" class="sidebar-nav-link">
+            <span class="material-symbols-outlined">subscriptions</span>
+            Subscriptions
+        </a>
+        <a href="{% url 'platform_admin_streams' %}" class="sidebar-nav-link {% if request.resolver_match.url_name == 'platform_admin_streams' %}active{% endif %}">
+            <span class="material-symbols-outlined">live_tv</span>
+            Stream Monitor
+        </a>
+        <a href="{% url 'platform_admin_referrals' %}" class="sidebar-nav-link {% if 'referral' in request.resolver_match.url_name %}active{% endif %}">
+            <span class="material-symbols-outlined">diversity_3</span>
+            Referrals
+        </a>
+        <a href="#" class="sidebar-nav-link">
+            <span class="material-symbols-outlined">monitoring</span>
+            Analytics
+        </a>
+        <a href="#" class="sidebar-nav-link">
+            <span class="material-symbols-outlined">policy</span>
+            Legal & Support
+        </a>
+        <a href="{% url 'dashboard' %}" class="sidebar-nav-link mt-5" style="color: #ff4d4d;">
+            <span class="material-symbols-outlined">exit_to_app</span>
+            Exit to App
+        </a>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="admin-main-content">
+        <header class="admin-header">
+            <div>
+                <h1 class="header-title">{% block header_title %}Overview{% endblock %}</h1>
+                <span class="text-white-50" style="font-size: 0.9rem;">LivKit Platform Administration</span>
+            </div>
+            <div class="header-actions">
+                <div class="header-icon">
+                    <span class="material-symbols-outlined">notifications</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.05); padding: 5px 15px; border-radius: 50px;">
+                    <img src="https://ui-avatars.com/api/?name=Admin&background=random" style="width: 30px; height: 30px; border-radius: 50%;">
+                    <span class="fw-bold" style="font-size: 0.9rem;">Super Admin</span>
+                </div>
+            </div>
+        </header>
+
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

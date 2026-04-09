@@ -1,0 +1,206 @@
+{% extends 'platform_admin_base.html' %}
+{% load static %}
+
+{% block header_title %}Wallets & Payouts{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+    <!-- Platform Liquid Funds -->
+    <div class="col-md-6">
+        <div class="premium-card h-100" style="background: linear-gradient(135deg, #00C853 0%, #B2FF59 100%); color: #000;">
+            <div style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8;">Total Pending Payouts (Platform Liability)</div>
+            <div style="font-size: 2.5rem; font-weight: bold; margin: 15px 0;">${{ total_pending|default:"0.00" }}</div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; opacity: 0.8;">
+                <span>Across {{ pending_count|default:"0" }} requests</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Approved Payouts MTD -->
+    <div class="col-md-6">
+        <div class="stat-card h-100">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                <div>
+                    <span class="material-symbols-outlined" style="color: #4CAF50; font-size: 28px;">task_alt</span>
+                </div>
+                <span class="badge bg-success bg-opacity-10 text-success rounded-pill">This Month</span>
+            </div>
+            <div style="font-size: 0.9rem; color: rgba(255,255,255,0.5); text-transform: uppercase;">Total Processed</div>
+            <div style="font-size: 2rem; font-weight: bold;">${{ total_processed|default:"0.00" }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Nav tabs for Wallets -->
+<ul class="nav nav-tabs border-secondary mb-4" id="walletTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active bg-transparent text-white border-0 border-bottom border-primary border-3" id="requests-tab" data-bs-toggle="tab" data-bs-target="#requests" type="button" role="tab" style="border-radius: 0;">Withdrawal Requests</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link bg-transparent text-white-50 border-0" id="accounts-tab" data-bs-toggle="tab" data-bs-target="#accounts" type="button" role="tab">Payment Accounts</button>
+    </li>
+</ul>
+
+<div class="tab-content" id="walletTabsContent">
+    <!-- Web Requests Tab -->
+    <div class="tab-pane fade show active" id="requests" role="tabpanel">
+        <div class="stat-card p-0 overflow-hidden">
+            <div class="p-4 border-bottom d-flex justify-content-between align-items-center" style="border-color: rgba(255,255,255,0.1) !important; background: rgba(0,0,0,0.2);">
+                <h5 class="m-0 fw-bold">Recent Requests</h5>
+                <form method="GET" class="d-flex gap-2">
+                    <select name="status" class="form-select form-select-sm bg-transparent text-white border-secondary shadow-none w-auto" onchange="this.form.submit()">
+                        <option class="text-dark" value="pending" {% if request.GET.status == 'pending' or not request.GET.status %}selected{% endif %}>Pending</option>
+                        <option class="text-dark" value="approved" {% if request.GET.status == 'approved' %}selected{% endif %}>Approved</option>
+                        <option class="text-dark" value="paid" {% if request.GET.status == 'paid' %}selected{% endif %}>Paid</option>
+                        <option class="text-dark" value="rejected" {% if request.GET.status == 'rejected' %}selected{% endif %}>Rejected</option>
+                        <option class="text-dark" value="all" {% if request.GET.status == 'all' %}selected{% endif %}>All</option>
+                    </select>
+                </form>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-dark table-hover align-middle mb-0" style="background: transparent;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid rgba(255,255,255,0.1);">
+                            <th class="bg-transparent border-0 text-white-50 py-3 ps-4">Date</th>
+                            <th class="bg-transparent border-0 text-white-50 py-3">User</th>
+                            <th class="bg-transparent border-0 text-white-50 py-3">Amount</th>
+                            <th class="bg-transparent border-0 text-white-50 py-3">Method</th>
+                            <th class="bg-transparent border-0 text-white-50 py-3">Status</th>
+                            <th class="bg-transparent border-0 text-white-50 py-3 text-end pe-4">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pay in payouts %}
+                        <tr style="border-color: rgba(255,255,255,0.05);">
+                            <td class="bg-transparent py-3 ps-4 text-white-50">{{ pay.created_at|date:"M d, Y H:i" }}</td>
+                            <td class="bg-transparent py-3">{{ pay.user.email }}</td>
+                            <td class="bg-transparent py-3 fw-bold text-success">${{ pay.amount }}</td>
+                            <td class="bg-transparent py-3">
+                                {% if pay.payment_account %}
+                                    {{ pay.payment_account.bank_name }}<br>
+                                    <small class="text-white-50">****{{ pay.payment_account.account_number|slice:"-4:" }}</small>
+                                {% else %}
+                                    <span class="text-danger">Account Deleted</span>
+                                {% endif %}
+                            </td>
+                            <td class="bg-transparent py-3">
+                                {% if pay.status == 'processing' %}
+                                    <span class="badge bg-warning text-dark rounded-pill">Processing</span>
+                                {% elif pay.status == 'paid' %}
+                                    <span class="badge bg-success rounded-pill">Paid</span>
+                                {% else %}
+                                    <span class="badge bg-danger rounded-pill">Failed</span>
+                                {% endif %}
+                            </td>
+                            <td class="bg-transparent py-3 text-end pe-4">
+                                {% if pay.status == 'processing' %}
+                                <form method="POST" action="{% url 'platform_admin_process_payout' %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="payout_id" value="{{ pay.id }}">
+                                    <button type="submit" name="action" value="mark_paid" class="btn btn-sm btn-outline-success rounded-pill px-3 me-1">Mark Paid</button>
+                                    <button type="submit" name="action" value="mark_failed" class="btn btn-sm btn-outline-danger rounded-pill px-3">Mark Failed</button>
+                                </form>
+                                {% else %}
+                                <span class="text-white-50"><span class="material-symbols-outlined fs-5 align-middle">lock</span> Settled</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-5 text-white-50 bg-transparent">
+                                <span class="material-symbols-outlined" style="font-size: 40px; margin-bottom: 10px; opacity: 0.5;">payments</span>
+                                <p>No payout history found.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payments Tab -->
+    <div class="tab-pane fade" id="accounts" role="tabpanel">
+        <div class="stat-card p-0 overflow-hidden">
+            <div class="p-4 border-bottom" style="border-color: rgba(255,255,255,0.1) !important; background: rgba(0,0,0,0.2);">
+                <h5 class="m-0 fw-bold">User Payment Accounts</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-dark table-hover align-middle mb-0" style="background: transparent;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid rgba(255,255,255,0.1);">
+                            <th class="bg-transparent border-0 text-white-50 py-3 ps-4">User</th>
+                            <th class="bg-transparent border-0 text-white-50 py-3">Type</th>
+                            <th class="bg-transparent border-0 text-white-50 py-3">Details</th>
+                            <th class="bg-transparent border-0 text-white-50 py-3">Status</th>
+                            <th class="bg-transparent border-0 text-white-50 py-3 text-end pe-4">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for account in payment_accounts %}
+                        <tr style="border-color: rgba(255,255,255,0.05);">
+                            <td class="bg-transparent py-3 ps-4">{{ account.user.email }}</td>
+                            <td class="bg-transparent py-3">{{ account.get_account_type_display }}</td>
+                            <td class="bg-transparent py-3">
+                                <div>{{ account.account_name }}</div>
+                                <div class="text-white-50" style="font-size: 0.85rem;">{{ account.account_number }} {% if account.bank_name %}({{ account.bank_name }}){% endif %}</div>
+                            </td>
+                            <td class="bg-transparent py-3">
+                                {% if account.is_verified %}
+                                    <span class="badge bg-success bg-opacity-10 text-success rounded-pill">Verified</span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark rounded-pill">Unverified</span>
+                                {% endif %}
+                            </td>
+                            <td class="bg-transparent py-3 text-end pe-4">
+                                {% if not account.is_verified %}
+                                <form method="POST" action="{% url 'platform_admin_verify_account' %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="account_id" value="{{ account.id }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-primary rounded-pill px-3">Verify</button>
+                                </form>
+                                {% else %}
+                                <form method="POST" action="{% url 'platform_admin_verify_account' %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="account_id" value="{{ account.id }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">Revoke</button>
+                                </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-white-50 bg-transparent">
+                                <p>No payment accounts registered yet.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Simple tab styling toggler
+    document.querySelectorAll('.nav-link').forEach(tab => {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('.nav-link').forEach(t => {
+                t.classList.remove('border-bottom', 'border-primary', 'border-3', 'text-white');
+                t.classList.add('text-white-50');
+            });
+            this.classList.remove('text-white-50');
+            this.classList.add('border-bottom', 'border-primary', 'border-3', 'text-white');
+        });
+    });
+</script>
+
+<style>
+    .table-dark {
+        --bs-table-bg: transparent;
+        --bs-table-color: white;
+        --bs-table-hover-bg: rgba(255, 255, 255, 0.05);
+    }
+</style>
+{% endblock %}

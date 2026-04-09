@@ -1,0 +1,57 @@
+:root,
+[data-bs-theme=light],
+[data-bs-theme=dark] {
+    /* Set primary app color */
+    --bs-primary: #FF3B30;
+    /* A vibrant red/accent for a live streaming app, matching some of the red accents in Flutter */
+    --bs-primary-rgb: 255, 59, 48;
+
+    /* Overall backgrounds - Pitch Black */
+    --bs-body-bg: #000000;
+    --bs-body-bg-rgb: 0, 0, 0;
+
+    --bs-secondary-bg: #121212;
+    --bs-secondary-bg-rgb: 18, 18, 18;
+
+    --bs-tertiary-bg: #1E1E1E;
+    --bs-tertiary-bg-rgb: 30, 30, 30;
+
+    /* Text Colors */
+    --bs-body-color: #E0E0E0;
+    --bs-heading-color: #FFFFFF;
+
+    /* Links */
+    --bs-link-color: #FF3B30;
+    --bs-link-hover-color: #FF6B60;
+}
+
+/* Custom Gradient Utilities from the app */
+.bg-app-gradient {
+    background: linear-gradient(135deg, var(--bs-primary) 0%, #FF6B60 100%);
+    color: white;
+}
+
+.text-app-gradient {
+    background: linear-gradient(135deg, var(--bs-primary) 0%, #FF6B60 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Custom pitch black specific utilities */
+.bg-secondary-theme {
+    background-color: var(--bs-secondary-bg) !important;
+}
+
+body {
+    background-color: var(--bs-body-bg) !important;
+    color: var(--bs-body-color) !important;
+}
+
+/* Overriding Streamit specific colors */
+.text-primary {
+    color: var(--bs-primary) !important;
+}
+
+.bg-primary {
+    background-color: var(--bs-primary) !important;
+}

@@ -1,0 +1,1158 @@
+{% extends 'mobile_base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    /* Prevent scrolling on the go-live screen */
+    body,
+    html {
+        overflow: hidden;
+    }
+
+    .go-live-wrapper {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        height: calc(100dvh - 75px);
+        background-color: black;
+        color: white;
+    }
+
+    /* Top AppBar */
+    .top-action-bar {
+        display: flex;
+        align-items: center;
+        padding: 15px 20px;
+        justify-content: space-between;
+    }
+
+    .top-action-bar .material-symbols-outlined {
+        color: white;
+        cursor: pointer;
+        font-size: 24px;
+    }
+
+    .top-action-bar .title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+
+    .top-action-bar .spacer-icon {
+        width: 24px;
+        /* Matches close icon width for perfect centering */
+    }
+
+    /* Camera Preview Area */
+    .camera-preview-container {
+        margin: 10px 16px;
+        flex: 1;
+        /* Takes available space */
+        min-height: 250px;
+        max-height: 40vh;
+        background-color: rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .camera-preview-container .material-symbols-outlined {
+        font-size: 60px;
+        color: rgba(255, 255, 255, 0.54);
+    }
+
+    /* Input Fields */
+    .input-section {
+        padding: 10px 20px;
+    }
+
+    .modern-input {
+        width: 100%;
+        background-color: rgba(255, 255, 255, 0.12);
+        border: none;
+        border-radius: 14px;
+        padding: 16px;
+        color: white;
+        font-size: 1rem;
+        outline: none;
+    }
+
+    .modern-input::placeholder {
+        color: rgba(255, 255, 255, 0.54);
+    }
+
+    /* Options Row */
+    .options-row {
+        display: flex;
+        justify-content: space-evenly;
+        padding: 15px 0;
+        margin-top: 5px;
+    }
+
+    .option-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        cursor: pointer;
+    }
+
+    .option-icon-wrapper {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        background-color: rgba(255, 255, 255, 0.12);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 8px;
+    }
+
+    .option-item.public .option-icon-wrapper .material-symbols-outlined {
+        color: #00E676;
+        /* Green accent */
+    }
+
+    .option-item .label {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 12px;
+    }
+
+    /* Right Floating Action Bar */
+    .floating-actions-right {
+        position: absolute;
+        top: 20px;
+        right: 15px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        z-index: 10;
+    }
+
+    .floating-actions-right .action-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        cursor: pointer;
+    }
+
+    .floating-actions-right .action-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: rgba(0, 0, 0, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(5px);
+    }
+
+    .floating-actions-right .action-icon .material-symbols-outlined {
+        font-size: 20px;
+        color: white;
+    }
+
+    .floating-actions-right .action-label {
+        font-size: 10px;
+        color: white;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+    }
+
+    /* Category Swipe Bar */
+    .category-selector {
+        display: flex;
+        overflow-x: auto;
+        padding: 10px 20px;
+        gap: 20px;
+        scrollbar-width: none;
+        /* Firefox */
+        align-items: center;
+    }
+
+    .category-selector::-webkit-scrollbar {
+        display: none;
+        /* Chrome */
+    }
+
+    .category-item {
+        color: rgba(255, 255, 255, 0.5);
+        font-weight: 600;
+        font-size: 15px;
+        white-space: nowrap;
+        cursor: pointer;
+        padding-bottom: 5px;
+        transition: all 0.2s ease;
+    }
+
+    .category-item.active {
+        color: white;
+        font-size: 17px;
+        border-bottom: 2px solid white;
+    }
+
+    /* Huge Gradient Button */
+    .bottom-button-area {
+        padding: 10px 0 25px;
+        display: flex;
+        justify-content: center;
+    }
+
+    .gradient-btn {
+        width: 240px;
+        height: 52px;
+        border-radius: 26px;
+        background: linear-gradient(to right, #FF0050, #FF2E63);
+        color: white;
+        font-weight: bold;
+        font-size: 1.1rem;
+        letter-spacing: 1.2px;
+        border: none;
+        box-shadow: 0 6px 15px rgba(255, 46, 99, 0.4);
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+
+    .gradient-btn:active {
+        transform: scale(0.95);
+    }
+
+    /* Private Stream Password Row */
+    #password-row {
+        display: none;
+        padding: 0 20px 10px;
+        animation: fadeInDown 0.3s ease-out;
+    }
+
+    @keyframes fadeInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    /* =========================================
+       HOST STUDIO CSS 
+       ========================================= */
+    .host-studio-wrapper {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        height: 100dvh;
+        background-color: #000;
+        z-index: 9999;
+        display: none; /* hidden by default */
+        flex-direction: column;
+    }
+
+    /* The actual camera feed covers entire screen */
+    .host-camera-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1; /* baseline */
+    }
+
+    /* All UI sits above the camera */
+    .host-ui-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 10;
+        pointer-events: none; /* Let clicks pass through empty spaces */
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .host-top-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding: calc(env(safe-area-inset-top, 20px) + 15px) 15px 0 15px;
+        pointer-events: auto; /* clickable area */
+    }
+
+    .host-profile-pill {
+        display: flex;
+        align-items: center;
+        background-color: rgba(0, 0, 0, 0.5);
+        padding: 5px 12px 5px 5px;
+        border-radius: 30px;
+        backdrop-filter: blur(8px);
+        gap: 8px;
+    }
+
+    .host-profile-pill img {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    .host-profile-info {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .host-profile-info .username {
+        color: white;
+        font-weight: bold;
+        font-size: 0.85rem;
+        margin: 0;
+    }
+
+    .host-live-badge {
+        background-color: #ff0050;
+        color: white;
+        font-weight: 800;
+        font-size: 0.65rem;
+        padding: 2px 6px;
+        border-radius: 5px;
+        margin-top: 2px;
+        display: inline-block;
+        letter-spacing: 0.5px;
+    }
+
+    .host-top-right {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .host-viewers {
+        background-color: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(8px);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-weight: bold;
+        font-size: 0.85rem;
+    }
+
+    .host-end-btn {
+        background-color: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(8px);
+        border: none;
+        color: white;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+    }
+
+    .host-middle-area {
+        flex: 1;
+        display: flex;
+        align-items: flex-end;
+        padding: 15px;
+        pointer-events: none;
+    }
+
+    .host-chat-box {
+        background: transparent;
+        width: 75%;
+        max-height: 250px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        -ms-overflow-style: none;  /* IE and Edge */
+        scrollbar-width: none;  /* Firefox */
+        /* mask-image for fading out top comments */
+        -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 20%);
+        mask-image: linear-gradient(to bottom, transparent 0%, black 20%);
+    }
+
+    .host-chat-box::-webkit-scrollbar {
+        display: none;
+    }
+
+    .host-chat-msg {
+        background-color: rgba(0, 0, 0, 0.4);
+        padding: 5px 10px;
+        border-radius: 12px;
+        color: white;
+        font-size: 0.85rem;
+        display: inline-block;
+        align-self: flex-start;
+        backdrop-filter: blur(5px);
+        line-height: 1.3;
+        pointer-events: auto; /* clickable if needed */
+    }
+    .host-chat-name {
+        color: #ffeb3b;
+        font-weight: bold;
+        margin-right: 5px;
+    }
+
+    .host-bottom-bar {
+        display: flex;
+        justify-content: space-evenly;
+        align-items: center;
+        padding: 15px 10px calc(env(safe-area-inset-bottom, 20px) + 15px) 10px;
+        background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%);
+        pointer-events: auto; /* clickable area */
+    }
+
+    .host-tool-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+        color: white;
+        background: none;
+        border: none;
+        cursor: pointer;
+    }
+
+    .host-tool-btn .icon-bg {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background-color: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .host-tool-btn span.label {
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="go-live-wrapper">
+    <!-- Top Bar -->
+    <div class="top-action-bar">
+        <span class="material-symbols-outlined" onclick="window.history.back()">close</span>
+        <span class="title">Go Live</span>
+        <div class="spacer-icon"></div>
+    </div>
+
+    <!-- Camera Preview Placeholder -->
+    <div class="camera-preview-container" style="position: relative;">
+        <!-- Right side floating controls -->
+        <div class="floating-actions-right">
+            <div class="action-btn">
+                <div class="action-icon">
+                    <span class="material-symbols-outlined">flip_camera_ios</span>
+                </div>
+                <span class="action-label">Flip</span>
+            </div>
+            <div class="action-btn" onclick="alert('Camera Flash is available in the LivKit mobile app.')">
+                <div class="action-icon">
+                    <span class="material-symbols-outlined">flash_on</span>
+                </div>
+                <span class="action-label">Flash</span>
+            </div>
+            <div class="action-btn" onclick="alert('Beauty filters are available in the LivKit mobile app.')">
+                <div class="action-icon">
+                    <span class="material-symbols-outlined">face_retouching_natural</span>
+                </div>
+                <span class="action-label">Beauty</span>
+            </div>
+            <div class="action-btn" onclick="alert('Special effects are available in the LivKit mobile app.')">
+                <div class="action-icon">
+                    <span class="material-symbols-outlined">auto_awesome</span>
+                </div>
+                <span class="action-label">Effects</span>
+            </div>
+            <div class="action-btn" onclick="alert('Advanced settings are available in the LivKit mobile app.')">
+                <div class="action-icon">
+                    <span class="material-symbols-outlined">settings</span>
+                </div>
+                <span class="action-label">Settings</span>
+            </div>
+        </div>
+
+        <span class="material-symbols-outlined">videocam</span>
+    </div>
+
+    <!-- Title Input -->
+    <div class="input-section">
+        <input type="text" class="modern-input" placeholder="Add a title for your live" maxlength="80">
+    </div>
+
+    <!-- Stream Options -->
+    <div class="options-row">
+        <div class="option-item public" id="privacy-toggle" onclick="togglePrivacy()">
+            <div class="option-icon-wrapper" id="privacy-icon-wrapper">
+                <span class="material-symbols-outlined" id="privacy-icon">public</span>
+            </div>
+            <span class="label" id="privacy-label">Public</span>
+        </div>
+        <div class="option-item" id="chat-toggle" onclick="toggleChat()">
+            <div class="option-icon-wrapper" id="chat-icon-wrapper">
+                <span class="material-symbols-outlined" id="chat-icon">chat_bubble_outline</span>
+            </div>
+            <span class="label" id="chat-label">Chat</span>
+        </div>
+        <div class="option-item" id="multiguest-toggle" onclick="toggleMultiGuest()">
+            <div class="option-icon-wrapper" id="multiguest-icon-wrapper">
+                <span class="material-symbols-outlined" id="multiguest-icon">group_add</span>
+            </div>
+            <span class="label" id="multiguest-label">Multi-Guest</span>
+        </div>
+        <div class="option-item" onclick="alert('You can share your stream link securely after you go live!')">
+            <div class="option-icon-wrapper">
+                <span class="material-symbols-outlined">share</span>
+            </div>
+            <span class="label">Share</span>
+        </div>
+    </div>
+
+    <!-- Hidden Password and Settings for Private Streams -->
+    <div id="password-row" class="input-section" style="display: none; padding-top: 0;">
+        <input type="password" id="stream-password" class="modern-input mb-3" placeholder="Set a password for your private live">
+        <label style="display: flex; align-items: center; gap: 10px; color: rgba(255, 255, 255, 0.8); font-size: 0.95rem; cursor: pointer;">
+            <input type="checkbox" id="stream-requires-approval" style="width: 20px; height: 20px; accent-color: #FF0050;">
+            Require Host Approval to Join
+        </label>
+    </div>
+
+    <div style="flex: 1;"></div> <!-- Push tools down -->
+
+    <!-- Horizontal Category Selector -->
+    <div class="category-selector">
+        <span class="category-item">LIVE Feed</span>
+        <span class="category-item active">LIVE</span>
+        <span class="category-item">Audio Room</span>
+        <span class="category-item">Game Streaming</span>
+        <span class="category-item">Group Streaming</span>
+    </div>
+
+    <!-- Go Live Button -->
+    <div class="bottom-button-area">
+        <button class="gradient-btn">GO LIVE</button>
+    </div>
+</div>
+
+<!-- =========================================
+     HOST STUDIO OVERLAY
+     ========================================= -->
+<div class="host-studio-wrapper" id="hostStudioWrapper">
+    <!-- Camera container (takes 100% space) -->
+    <div id="host-camera-container" class="host-camera-container"></div>
+    
+    <!-- UI Overlay container -->
+    <div class="host-ui-overlay">
+        
+        <!-- Top Apps / info -->
+        <div class="host-top-header">
+            <div class="host-profile-pill">
+                {% if user.profile.avatar %}
+                    <img src="{{ user.profile.avatar.url }}" alt="Profile">
+                {% else %}
+                    <img src="https://ui-avatars.com/api/?name={{ user.username }}" alt="Profile">
+                {% endif %}
+                <div class="host-profile-info">
+                    <h6 class="username">{{ user.username }}</h6>
+                    <span class="host-live-badge">LIVE</span>
+                </div>
+            </div>
+            
+            <div class="host-top-right">
+                <div class="host-viewers">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">visibility</span>
+                    <span id="hostViewerCount">0</span>
+                </div>
+                <button class="host-end-btn" onclick="endBroadcast()" aria-label="End Stream">
+                    <span class="material-symbols-outlined" style="color: #ff0050; font-size: 24px;">close</span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Middle area for chats, floats up -->
+        <div class="host-middle-area">
+            <div class="host-chat-box" id="hostChatBox">
+                <div class="host-chat-msg" style="background-color: rgba(255, 0, 80, 0.4); border-left: 3px solid #ff0050;">
+                    <span class="host-chat-name">LivKit System:</span>
+                    Welcome to your professional broadcast studio! You are live.
+                </div>
+                <!-- Future chats injected here by JS/websockets -->
+            </div>
+        </div>
+        
+        <!-- Bottom Controller Bar for Host -->
+        <div class="host-bottom-bar">
+            <button class="host-tool-btn" id="hostFlipBtn">
+                <div class="icon-bg"><span class="material-symbols-outlined">flip_camera_ios</span></div>
+                <span class="label">Flip</span>
+            </button>
+            <button class="host-tool-btn" id="hostMicBtn">
+                <div class="icon-bg" id="micIconBg"><span class="material-symbols-outlined" id="micIconHost">mic</span></div>
+                <span class="label" id="micLabelHost">Mic</span>
+            </button>
+            <button class="host-tool-btn" id="hostCamBtn">
+                <div class="icon-bg" id="camIconBg"><span class="material-symbols-outlined" id="camIconHost">videocam</span></div>
+                <span class="label" id="camLabelHost">Video</span>
+            </button>
+            <button class="host-tool-btn" id="hostRequestsBtn" style="display: none;" onclick="openModal('requestsModal')">
+                <div class="icon-bg"><span class="material-symbols-outlined">group_add</span></div>
+                <span class="label">Requests (<span id="request-badge-count">0</span>)</span>
+            </button>
+            <button class="host-tool-btn" onclick="alert('Host beautification is available in the LivKit mobile app!')">
+                <div class="icon-bg"><span class="material-symbols-outlined">face_retouching_natural</span></div>
+                <span class="label">Beauty</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Requests Modal for Host -->
+<div class="bottom-sheet-modal" id="requestsModal" style="z-index: 10000;">
+    <div class="modal-header">
+        <h3 class="modal-title">Join Requests</h3>
+        <button class="modal-close" onclick="closeModal('requestsModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+        <ul id="requestsList" style="list-style: none; padding: 0; margin: 0; color: white;">
+            <li style="text-align: center; color: #888; padding: 20px;">No pending requests.</li>
+        </ul>
+    </div>
+</div>
+
+<script type="module">
+    // -----------------------------------------
+    // Supabase & Django API Integration
+    // -----------------------------------------
+    const API_BASE = "/streaming"; 
+
+    let isPrivate = false;
+    window.togglePrivacy = function () {
+        isPrivate = !isPrivate;
+        const iconWrapper = document.getElementById('privacy-icon-wrapper');
+        const icon = document.getElementById('privacy-icon');
+        const label = document.getElementById('privacy-label');
+        const passwordRow = document.getElementById('password-row');
+
+        if (isPrivate) {
+            icon.innerText = "lock";
+            icon.style.color = "#FF2E63";
+            label.innerText = "Private";
+            passwordRow.style.display = "block";
+        } else {
+            icon.innerText = "public";
+            icon.style.color = "#00E676";
+            label.innerText = "Public";
+            passwordRow.style.display = "none";
+        }
+    }
+
+    let allowChat = true;
+    window.toggleChat = function() {
+        allowChat = !allowChat;
+        const icon = document.getElementById('chat-icon');
+        if (allowChat) {
+            icon.innerText = "chat_bubble";
+            icon.style.color = "#00E676";
+        } else {
+            icon.innerText = "chat_bubble_outline";
+            icon.style.color = "inherit";
+        }
+    }
+
+    let allowMultiGuest = false;
+    window.toggleMultiGuest = function() {
+        allowMultiGuest = !allowMultiGuest;
+        const icon = document.getElementById('multiguest-icon');
+        if (allowMultiGuest) {
+            icon.style.color = "#FF2E63";
+        } else {
+            icon.style.color = "inherit";
+        }
+    }
+
+    // -----------------------------------------
+    // Functionality: Private Live Join Requests
+    // -----------------------------------------
+    async function pollJoinRequests() {
+        if (!_privateToken) return;
+        try {
+            const formData = new URLSearchParams();
+            formData.append('action', 'get_requests');
+            
+            const response = await fetch(`/api/stream/${_privateToken}/action/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': csrfToken
+                },
+                body: formData.toString()
+            });
+            const result = await response.json();
+            if (result.status === 'success') {
+                updateRequestsList(result.requests);
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    function updateRequestsList(requests) {
+        const badge = document.getElementById('request-badge-count');
+        const list = document.getElementById('requestsList');
+        badge.innerText = requests.length;
+        
+        if (requests.length === 0) {
+            list.innerHTML = '<li style="text-align: center; color: #888; padding: 20px;">No pending requests.</li>';
+            return;
+        }
+        
+        let html = '';
+        requests.forEach(req => {
+            html += `<li style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <span>${req.username}</span>
+                <div style="display: flex; gap: 10px;">
+                    <button style="background: #00E676; border: none; padding: 5px 12px; border-radius: 12px; color: white; font-weight: bold; cursor: pointer;" onclick="handleRequestAction('${req.id}', 'approve')">Approve</button>
+                    <button style="background: rgba(255,255,255,0.2); border: none; padding: 5px 12px; border-radius: 12px; color: white; font-weight: bold; cursor: pointer;" onclick="handleRequestAction('${req.id}', 'reject')">Deny</button>
+                </div>
+            </li>`;
+        });
+        list.innerHTML = html;
+    }
+
+    window.handleRequestAction = async function(viewerId, action) {
+        if (!_privateToken) return;
+        try {
+            const formData = new URLSearchParams();
+            formData.append('action', action);
+            formData.append('viewer_id', viewerId);
+            
+            await fetch(`/api/stream/${_privateToken}/action/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': csrfToken
+                },
+                body: formData.toString()
+            });
+            pollJoinRequests(); // Refresh immediately
+        } catch(e) {
+            console.error(e);
+        }
+    };
+
+    // -----------------------------------------
+    // Functionality: Privacy & Categories
+    // -----------------------------------------
+
+    document.querySelectorAll('.category-item').forEach(item => {
+        item.addEventListener('click', function () {
+            document.querySelectorAll('.category-item').forEach(el => el.classList.remove('active'));
+            this.classList.add('active');
+            this.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        });
+    });
+
+    // -----------------------------------------
+    // Agora SDK Integration & Camera Setup
+    // -----------------------------------------
+    const APP_ID = "{{ agora_app_id }}"; 
+    let rtcClient = null;
+    let localAudioTrack = null;
+    let localVideoTrack = null;
+    let _streamId = null;
+    let _privateToken = null;
+    let isVideoMuted = false;
+    let isAudioMuted = false;
+    let currentFacingMode = "user"; // Mobile camera flip tracking
+
+
+    const goLiveBtn = document.querySelector('.gradient-btn');
+    const titleInput = document.querySelector('.modern-input');
+    const previewContainer = document.querySelector('.camera-preview-container');
+
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]') ? document.querySelector('[name=csrfmiddlewaretoken]').value : "";
+
+    // 1. Initialize Camera Preview instantly on page load
+    async function initCameraPreview() {
+        try {
+            // Request permissions and get tracks
+            localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+            localVideoTrack = await AgoraRTC.createCameraVideoTrack({ facingMode: currentFacingMode, encoderConfig: "720p_1" });
+            
+            // Clear placeholder icon
+            const placeholder = previewContainer.querySelector('.material-symbols-outlined.videocam');
+            if(placeholder) placeholder.style.display = 'none';
+            
+            localVideoTrack.play(previewContainer);
+            console.log("Camera preview started.");
+        } catch (error) {
+            console.error("Failed to initialize camera preview. Please grant permissions.", error);
+        }
+    }
+
+    initCameraPreview();
+
+    // 2. Wire Camera Control Buttons (Flip, Beauty, etc)
+    const actionBtns = document.querySelectorAll('.floating-actions-right .action-btn');
+    
+    // Wire Flip Button
+    if(actionBtns.length > 0) {
+        actionBtns[0].addEventListener('click', async () => {
+            if(localVideoTrack) {
+                currentFacingMode = currentFacingMode === "user" ? "environment" : "user";
+                const icon = actionBtns[0].querySelector('.material-symbols-outlined');
+                const newVideoTrack = await AgoraRTC.createCameraVideoTrack({ facingMode: currentFacingMode, encoderConfig: "720p_1" });
+                
+                if (rtcClient && _streamId) {
+                    await rtcClient.replaceTrack(localVideoTrack, newVideoTrack);
+                }
+                
+                localVideoTrack.stop();
+                localVideoTrack.close();
+                
+                localVideoTrack = newVideoTrack;
+                previewContainer.innerHTML = ''; 
+                localVideoTrack.play(previewContainer);
+                
+                icon.style.transform = currentFacingMode === "environment" ? "rotate(180deg)" : "rotate(0deg)";
+                icon.style.transition = "transform 0.3s";
+            }
+        });
+    }
+
+    // 3. Go Live Flow
+    goLiveBtn.addEventListener('click', async () => {
+        if (goLiveBtn.innerText === "END STREAM") {
+            await endBroadcast();
+            return;
+        }
+
+        goLiveBtn.disabled = true;
+        goLiveBtn.innerHTML = "STARTING...";
+
+        try {
+            const activeCategory = document.querySelector('.category-item.active');
+            const categoryName = activeCategory ? activeCategory.innerText : "LIVE";
+            const password = document.querySelector('#stream-password').value;
+            const requiresApproval = document.querySelector('#stream-requires-approval').checked;
+
+            // A. Create stream document via Django API
+            const response = await fetch('/api/streaming/create/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({
+                    title: titleInput.value || "My Live Stream",
+                    category: categoryName,
+                    is_private: isPrivate,
+                    password: password,
+                    requires_approval: requiresApproval,
+                    allow_chat: allowChat,
+                    allow_multiguest: allowMultiGuest
+                })
+            });
+
+
+            if (!response.ok) throw new Error("Failed to create stream");
+
+            const result = await response.json();
+            _streamId = result.stream.id;
+            _privateToken = result.private_token;
+            const agoraToken = result.agora_token;
+
+            if (_privateToken) {
+                document.getElementById('hostRequestsBtn').style.display = 'flex';
+                setInterval(pollJoinRequests, 5000);
+            }
+
+            // B. Initialize Agora
+            if(!rtcClient) {
+                rtcClient = AgoraRTC.createClient({ mode: "live", codec: "vp8" });
+            }
+            await rtcClient.setClientRole("host");
+
+            // Listen for Co-Host track publications to render them
+            rtcClient.on("user-published", async (user, mediaType) => {
+                await rtcClient.subscribe(user, mediaType);
+                if (mediaType === "video") {
+                    let guestContainer = document.getElementById(`guest-${user.uid}`);
+                    if (!guestContainer) {
+                        guestContainer = document.createElement('div');
+                        guestContainer.id = `guest-${user.uid}`;
+                        guestContainer.className = 'host-guest-video-container';
+                        guestContainer.style.position = 'absolute';
+                        guestContainer.style.top = '140px';
+                        guestContainer.style.right = '15px';
+                        guestContainer.style.width = '110px';
+                        guestContainer.style.height = '150px';
+                        guestContainer.style.borderRadius = '12px';
+                        guestContainer.style.overflow = 'hidden';
+                        guestContainer.style.zIndex = '100';
+                        guestContainer.style.border = '2px solid #00E676';
+                        guestContainer.style.boxShadow = '0 5px 15px rgba(0,0,0,0.5)';
+                        document.getElementById('hostStudioWrapper').appendChild(guestContainer);
+                    }
+                    user.videoTrack.play(guestContainer);
+                }
+                if (mediaType === "audio") {
+                    user.audioTrack.play();
+                }
+            });
+
+            rtcClient.on("user-unpublished", (user, mediaType) => {
+                if (mediaType === "video") {
+                    const guestContainer = document.getElementById(`guest-${user.uid}`);
+                    if (guestContainer) guestContainer.remove();
+                }
+            });
+
+            // C. Join and Publish
+            await rtcClient.join(APP_ID, result.channel_name, agoraToken, null); // passing null as uid to let Agora assign one or use 0
+
+            if (!localAudioTrack || !localVideoTrack) {
+                localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+                localVideoTrack = await AgoraRTC.createCameraVideoTrack({ encoderConfig: "720p_1" });
+                localVideoTrack.play(previewContainer);
+            }
+            await rtcClient.publish([localAudioTrack, localVideoTrack]);
+
+            // -------------------------------------
+            // Transition to Host Broadcast Studio
+            // -------------------------------------
+            
+            // 1. Hide Setup Screen
+            document.querySelector('.go-live-wrapper').style.display = 'none';
+            
+            // 2. Show Host Studio smoothly
+            const studioWrapper = document.getElementById('hostStudioWrapper');
+            studioWrapper.style.display = 'flex';
+            
+            // 3. Move Video Track seamlessly
+            const hostCameraContainer = document.getElementById('host-camera-container');
+            // Clear old container just in case
+            previewContainer.innerHTML = '';
+            // Play in new fullscreen container
+            localVideoTrack.play(hostCameraContainer);
+            
+            // Optional: Start mock viewer counter for realism
+            let mockViewers = 0;
+            setInterval(() => {
+                if (Math.random() > 0.3) mockViewers += Math.floor(Math.random() * 5);
+                const viewerEl = document.getElementById('hostViewerCount');
+                if (viewerEl) viewerEl.innerText = mockViewers;
+            }, 3000);
+
+            // Start Polling for Co-Host Requests
+            startPollingForRequests();
+
+        } catch (error) {
+            console.error("Error starting stream:", error);
+            alert("Failed to start stream: " + error.message);
+            goLiveBtn.disabled = false;
+            goLiveBtn.innerHTML = "GO LIVE";
+        }
+    });
+
+    // ==========================================
+    // Host Broadcast Studio Functions
+    // ==========================================
+    
+    // Bind Host Buttons
+    window.flipCameraHost = async function() {
+        if (!localVideoTrack) return;
+        currentFacingMode = currentFacingMode === "user" ? "environment" : "user";
+        const newVideoTrack = await AgoraRTC.createCameraVideoTrack({ facingMode: currentFacingMode, encoderConfig: "720p_1" });
+        
+        if (rtcClient && _streamId) {
+            await rtcClient.replaceTrack(localVideoTrack, newVideoTrack);
+        }
+        
+        localVideoTrack.stop();
+        localVideoTrack.close();
+        localVideoTrack = newVideoTrack;
+        
+        const hostCameraContainer = document.getElementById('host-camera-container');
+        hostCameraContainer.innerHTML = ''; 
+        localVideoTrack.play(hostCameraContainer);
+    };
+
+    window.toggleMicHost = async function() {
+        if (!localAudioTrack) return;
+        const iconBg = document.getElementById('micIconBg');
+        const icon = document.getElementById('micIconHost');
+        const label = document.getElementById('micLabelHost');
+        
+        isAudioMuted = !isAudioMuted;
+        await localAudioTrack.setMuted(isAudioMuted);
+        
+        if (isAudioMuted) {
+            icon.innerText = "mic_off";
+            icon.style.color = "#ff0050";
+            iconBg.style.borderColor = "#ff0050";
+            iconBg.style.borderWidth = "2px";
+            iconBg.style.borderStyle = "solid";
+            label.innerText = "Muted";
+        } else {
+            icon.innerText = "mic";
+            icon.style.color = "white";
+            iconBg.style.borderWidth = "0px";
+            label.innerText = "Mic";
+        }
+    };
+
+    let polledRequestIds = new Set();
+    function startPollingForRequests() {
+        setInterval(async () => {
+            if (!_streamId) return;
+            try {
+                const response = await fetch(`/api/streaming/${_streamId}/cohost/requests/`);
+                if (response.ok) {
+                    const data = await response.json();
+                    data.requests.forEach(req => {
+                        if (!polledRequestIds.has(req.id)) {
+                            polledRequestIds.add(req.id);
+                            showRequestPrompt(req);
+                        }
+                    });
+                }
+            } catch (e) {
+                console.error("Polling error:", e);
+            }
+        }, 3000);
+    }
+
+    function showRequestPrompt(req) {
+        const popup = document.createElement('div');
+        popup.style.position = 'absolute';
+        popup.style.bottom = '120px'; // Just above the chat / controls
+        popup.style.left = '10px';
+        popup.style.right = '10px';
+        popup.style.backgroundColor = 'rgba(0,0,0,0.85)';
+        popup.style.backdropFilter = 'blur(10px)';
+        popup.style.borderRadius = '12px';
+        popup.style.padding = '15px';
+        popup.style.display = 'flex';
+        popup.style.alignItems = 'center';
+        popup.style.gap = '10px';
+        popup.style.zIndex = '200';
+        popup.style.boxShadow = '0 4px 15px rgba(0,0,0,0.5)';
+        popup.style.color = 'white';
+
+        popup.innerHTML = `
+            <img src="${req.viewer_avatar || 'https://via.placeholder.com/40'}" style="width:40px; height:40px; border-radius:50%; object-fit:cover;">
+            <div style="flex:1; overflow:hidden;">
+                <div style="font-weight:bold; font-size:0.95rem; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;">${req.viewer_username}</div>
+                <div style="font-size:0.8rem; color:#aaa;">wants to join as Co-Host</div>
+            </div>
+            <div style="display:flex; gap:8px;">
+                <button onclick="respondToRequest(${req.id}, 'accept', this)" style="background:#00E676; border:none; padding:8px 12px; border-radius:8px; color:#000; font-weight:bold; cursor:pointer;">Accept</button>
+                <button onclick="respondToRequest(${req.id}, 'reject', this)" style="background:#444; border:none; padding:8px 12px; border-radius:8px; color:white; font-weight:bold; cursor:pointer;">Deny</button>
+            </div>
+        `;
+        document.getElementById('hostStudioWrapper').appendChild(popup);
+    }
+
+    window.respondToRequest = async function(reqId, action, btnEl) {
+        const popup = btnEl.closest("div").parentElement; // Get the popup wrapper container
+        popup.style.opacity = '0.5';
+        popup.style.pointerEvents = 'none';
+        
+        try {
+            const response = await fetch(`/api/streaming/cohost/${reqId}/respond/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({ action: action })
+            });
+            if (response.ok) {
+                popup.remove();
+            } else {
+                popup.style.opacity = '1';
+                popup.style.pointerEvents = 'auto';
+                alert("Failed to respond");
+            }
+        } catch (e) {
+            popup.style.opacity = '1';
+            popup.style.pointerEvents = 'auto';
+            alert("Error responding");
+        }
+    }
+
+    window.toggleVideoHost = async function() {
+        if (!localVideoTrack) return;
+        const iconBg = document.getElementById('camIconBg');
+        const icon = document.getElementById('camIconHost');
+        const label = document.getElementById('camLabelHost');
+        
+        isVideoMuted = !isVideoMuted;
+        await localVideoTrack.setMuted(isVideoMuted);
+        
+        if (isVideoMuted) {
+            icon.innerText = "videocam_off";
+            icon.style.color = "#ff0050";
+            iconBg.style.borderColor = "#ff0050";
+            iconBg.style.borderWidth = "2px";
+            iconBg.style.borderStyle = "solid";
+            label.innerText = "Hidden";
+        } else {
+            icon.innerText = "videocam";
+            icon.style.color = "white";
+            iconBg.style.borderWidth = "0px";
+            label.innerText = "Video";
+        }
+    };
+    
+    // Bind inline clicks from HTML to global scope
+    document.getElementById('hostFlipBtn').onclick = window.flipCameraHost;
+    document.getElementById('hostMicBtn').onclick = window.toggleMicHost;
+    document.getElementById('hostCamBtn').onclick = window.toggleVideoHost;
+
+    window.endBroadcast = async function() {
+        const btn = document.querySelector('.host-end-btn');
+        if (btn) btn.innerHTML = '<span class="material-symbols-outlined" style="color:white; font-size: 20px;">hourglass_empty</span>';
+
+        try {
+            if (localAudioTrack) localAudioTrack.close();
+            if (localVideoTrack) localVideoTrack.close();
+            if (rtcClient) await rtcClient.leave();
+
+            if (_streamId) {
+                await fetch(`/streaming/end/${_streamId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    }
+                });
+            }
+
+            alert("Stream ended.");
+            window.location.href = "{% url 'dashboard' %}";
+        } catch (error) {
+            console.error("Error ending stream:", error);
+            alert("Failed to end stream: " + error.message);
+            goLiveBtn.disabled = false;
+            goLiveBtn.innerHTML = "END STREAM";
+        }
+    }
+</script>
+<script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.20.1.js"></script>
+{% endblock %}

@@ -1,0 +1,280 @@
+{% extends 'platform_admin_base.html' %}
+{% load static %}
+
+{% block header_title %}Subscription Packages{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+    <!-- Revenue -->
+    <div class="col-md-4">
+        <div class="premium-card h-100" style="background: linear-gradient(135deg, #FF9100 0%, #FF3D00 100%);">
+            <div style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9;">Monthly Sub Revenue</div>
+            <div style="font-size: 2.5rem; font-weight: bold; margin: 15px 0;">${{ monthly_revenue|default:"0.00" }}</div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.85rem;">
+                <span class="opacity-75"><span class="material-symbols-outlined fs-6 align-middle">receipt</span> Subscription Tiers</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Subs -->
+    <div class="col-md-4">
+        <div class="stat-card h-100">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                <div>
+                    <span class="material-symbols-outlined" style="color: #FF9800; font-size: 28px;">workspace_premium</span>
+                </div>
+                <span class="badge bg-warning text-dark rounded-pill">Active Now</span>
+            </div>
+            <div style="font-size: 0.9rem; color: rgba(255,255,255,0.5); text-transform: uppercase;">Total Active Subscribers</div>
+            <div style="font-size: 2rem; font-weight: bold;">{{ active_subs_count|default:"0" }}</div>
+        </div>
+    </div>
+    
+    <!-- Info -->
+    <div class="col-md-4">
+        <div class="stat-card h-100 d-flex justify-content-center align-items-center text-center">
+            <div class="text-white-50 p-3">
+                <span class="material-symbols-outlined fs-1 mb-2">info</span>
+                <p class="mb-0 fs-6">Update time-based subscription pricing here. Deactivating a tier hides it from the user purchase UI.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Nav tabs for Subscriptions & Coins -->
+<ul class="nav nav-tabs border-secondary mb-4" id="subsTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active bg-transparent text-white border-0 border-bottom border-warning border-3" id="subs-tab" data-bs-toggle="tab" data-bs-target="#subs" type="button" role="tab" style="border-radius: 0;">Time Subscriptions</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link bg-transparent text-white-50 border-0" id="coins-tab" data-bs-toggle="tab" data-bs-target="#coins" type="button" role="tab">Coin Packages <span class="badge bg-warning text-dark ms-2 rounded-pill">Top Up</span></button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link bg-transparent text-white-50 border-0" id="gifts-tab" data-bs-toggle="tab" data-bs-target="#gifts" type="button" role="tab">Virtual Gifts</button>
+    </li>
+</ul>
+
+<div class="tab-content" id="subsTabsContent">
+    <!-- Subscriptions Tab -->
+    <div class="tab-pane fade show active" id="subs" role="tabpanel">
+        <div class="stat-card p-0 overflow-hidden">
+            <div class="p-4 border-bottom" style="border-color: rgba(255,255,255,0.1) !important; background: rgba(0,0,0,0.2);">
+                <h5 class="m-0 fw-bold">Time-Based Tier Configuration</h5>
+            </div>
+    
+    <div class="table-responsive">
+        <table class="table table-dark table-hover align-middle mb-0" style="background: transparent;">
+            <thead>
+                <tr style="border-bottom: 2px solid rgba(255,255,255,0.1);">
+                    <th class="bg-transparent border-0 text-white-50 py-3 ps-4">Tier Duration</th>
+                    <th class="bg-transparent border-0 text-white-50 py-3">Base Price ($)</th>
+                    <th class="bg-transparent border-0 text-white-50 py-3">Discount (%)</th>
+                    <th class="bg-transparent border-0 text-white-50 py-3">Final Selling Price ($)</th>
+                    <th class="bg-transparent border-0 text-white-50 py-3">Status</th>
+                    <th class="bg-transparent border-0 text-white-50 py-3 text-end pe-4">Configure</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tier in tiers %}
+                <tr style="border-color: rgba(255,255,255,0.05);">
+                    <td class="bg-transparent py-4 ps-4 fw-bold">
+                        <span class="material-symbols-outlined align-middle fs-5 me-2 text-warning">schedule</span>
+                        {{ tier.duration_hours }} Hours
+                    </td>
+                    <form method="POST" action="{% url 'platform_admin_update_subscription' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="tier_id" value="{{ tier.id }}">
+                        
+                        <td class="bg-transparent py-4">
+                            <div class="input-group input-group-sm" style="width: 120px;">
+                                <span class="input-group-text bg-transparent text-white-50 border-secondary">$</span>
+                                <input type="number" step="0.01" name="price" value="{{ tier.price }}" class="form-control bg-transparent text-white border-secondary shadow-none text-center">
+                            </div>
+                        </td>
+                        <td class="bg-transparent py-4">
+                            <div class="input-group input-group-sm" style="width: 100px;">
+                                <input type="number" name="discount" value="{{ tier.discount_percentage }}" class="form-control bg-transparent text-white border-secondary shadow-none text-center">
+                                <span class="input-group-text bg-transparent text-white-50 border-secondary">%</span>
+                            </div>
+                        </td>
+                        <td class="bg-transparent py-4 text-success fw-bold">
+                            ${{ tier.get_final_price|floatformat:2 }}
+                        </td>
+                        <td class="bg-transparent py-4">
+                            <div class="form-check form-switch ms-2">
+                                <input class="form-check-input" type="checkbox" role="switch" name="is_active" id="flexSwitchCheck{{ tier.id }}" {% if tier.is_active %}checked{% endif %}>
+                            </div>
+                        </td>
+                        <td class="bg-transparent py-4 text-end pe-4">
+                            <button type="submit" class="btn btn-sm" style="background: rgba(255, 145, 0, 0.2); color: #FF9800; font-weight: bold; border-radius: 50px; padding: 5px 20px;">Save Package</button>
+                        </td>
+                    </form>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center py-5 text-white-50 bg-transparent">
+                        <p>No tiers generated. Run initialization script.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    </div>
+    
+    <!-- Coin Packages Tab -->
+    <div class="tab-pane fade" id="coins" role="tabpanel">
+        <div class="stat-card p-0 overflow-hidden">
+            <div class="p-4 border-bottom d-flex justify-content-between align-items-center" style="border-color: rgba(255,255,255,0.1) !important; background: rgba(0,0,0,0.2);">
+                <h5 class="m-0 fw-bold">Coin Package Pricing</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-dark table-hover align-middle mb-0" style="background: transparent;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid rgba(255,255,255,0.1);">
+                            <th class="bg-transparent border-0 text-white-50 py-3 ps-4">Coin Amount</th>
+                            <th class="bg-transparent border-0 text-white-50 py-3">Price ($)</th>
+                            <th class="bg-transparent border-0 text-white-50 py-3">Bonus Coins</th>
+                            <th class="bg-transparent border-0 text-white-50 py-3">Total Value</th>
+                            <th class="bg-transparent border-0 text-white-50 py-3">Status</th>
+                            <th class="bg-transparent border-0 text-white-50 py-3 text-end pe-4">Save</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pkg in coin_packages %}
+                        <tr style="border-color: rgba(255,255,255,0.05);">
+                            <td class="bg-transparent py-4 ps-4 fw-bold">
+                                <span class="material-symbols-outlined align-middle fs-5 me-2" style="color: #FFC107;">monetization_on</span>
+                                {{ pkg.coin_amount }} Coins
+                            </td>
+                            <form method="POST" action="{% url 'platform_admin_update_coin_package' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="pkg_id" value="{{ pkg.id }}">
+                                
+                                <td class="bg-transparent py-4">
+                                    <div class="input-group input-group-sm" style="width: 120px;">
+                                        <span class="input-group-text bg-transparent text-white-50 border-secondary">$</span>
+                                        <input type="number" step="0.01" name="price" value="{{ pkg.price }}" class="form-control bg-transparent text-white border-secondary shadow-none text-center">
+                                    </div>
+                                </td>
+                                <td class="bg-transparent py-4">
+                                    <div class="input-group input-group-sm" style="width: 100px;">
+                                        <span class="input-group-text bg-transparent border-secondary ps-2 pe-1"><span class="material-symbols-outlined fs-6" style="color: #FFC107;">add_circle</span></span>
+                                        <input type="number" name="bonus" value="{{ pkg.bonus_coins }}" class="form-control bg-transparent text-white border-secondary shadow-none text-center rounded-end">
+                                    </div>
+                                </td>
+                                <td class="bg-transparent py-4 text-warning fw-bold">
+                                    {{ pkg.coin_amount|add:pkg.bonus_coins }} Total
+                                </td>
+                                <td class="bg-transparent py-4">
+                                    <div class="form-check form-switch ms-2">
+                                        <input class="form-check-input" type="checkbox" role="switch" name="is_active" id="flexSwitchCoin{{ pkg.id }}" {% if pkg.is_active %}checked{% endif %}>
+                                    </div>
+                                </td>
+                                <td class="bg-transparent py-4 text-end pe-4">
+                                    <button type="submit" class="btn btn-sm btn-outline-warning rounded-pill px-3">Update</button>
+                                </td>
+                            </form>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Virtual Gifts Tab -->
+    <div class="tab-pane fade" id="gifts" role="tabpanel">
+        <div class="stat-card p-0 overflow-hidden">
+            <div class="p-4 border-bottom d-flex justify-content-between align-items-center" style="border-color: rgba(255,255,255,0.1) !important; background: rgba(0,0,0,0.2);">
+                <h5 class="m-0 fw-bold">Virtual Gift Configuration</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-dark table-hover align-middle mb-0" style="background: transparent;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid rgba(255,255,255,0.1);">
+                            <th class="bg-transparent border-0 text-white-50 py-3 ps-4">Visual Icon</th>
+                            <th class="bg-transparent border-0 text-white-50 py-3">Gift Name</th>
+                            <th class="bg-transparent border-0 text-white-50 py-3">Coin Cost (Price)</th>
+                            <th class="bg-transparent border-0 text-white-50 py-3">Active Status</th>
+                            <th class="bg-transparent border-0 text-white-50 py-3 text-end pe-4">Apply</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for gift in virtual_gifts %}
+                        <tr style="border-color: rgba(255,255,255,0.05);">
+                            <td class="bg-transparent py-4 ps-4 text-center" style="width: 80px;">
+                                <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(255,152,0,0.1); display: flex; align-items: center; justify-content: center;">
+                                    <span class="material-symbols-outlined fs-4" style="color: #FF9800;">{{ gift.css_icon_class|default:'featured_seasonal_and_gifts' }}</span>
+                                </div>
+                            </td>
+                            <td class="bg-transparent py-4 fw-bold">{{ gift.name }}</td>
+                            <form method="POST" action="{% url 'platform_admin_update_virtual_gift' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="gift_id" value="{{ gift.id }}">
+                                
+                                <td class="bg-transparent py-4">
+                                    <div class="input-group input-group-sm" style="width: 130px;">
+                                        <input type="number" name="cost" value="{{ gift.coin_cost }}" class="form-control bg-transparent text-white border-secondary shadow-none text-center">
+                                        <span class="input-group-text bg-transparent border-secondary text-white-50">Coins</span>
+                                    </div>
+                                </td>
+                                <td class="bg-transparent py-4">
+                                    <div class="form-check form-switch ms-2">
+                                        <input class="form-check-input" type="checkbox" role="switch" name="is_active" id="flexSwitchGift{{ gift.id }}" {% if gift.is_active %}checked{% endif %}>
+                                    </div>
+                                </td>
+                                <td class="bg-transparent py-4 text-end pe-4">
+                                    <button type="submit" class="btn btn-sm btn-outline-warning rounded-pill px-3">Update</button>
+                                </td>
+                            </form>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Simple tab styling toggler
+    document.querySelectorAll('.nav-link').forEach(tab => {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('.nav-link').forEach(t => {
+                t.classList.remove('border-bottom', 'border-warning', 'border-3', 'text-white');
+                t.classList.add('text-white-50');
+            });
+            this.classList.remove('text-white-50');
+            this.classList.add('border-bottom', 'border-warning', 'border-3', 'text-white');
+        });
+    });
+    
+    // Auto-select tab based on URL hash
+    document.addEventListener("DOMContentLoaded", function() {
+        if(window.location.hash) {
+            var hash = window.location.hash;
+            var tabBtn = document.querySelector('button[data-bs-target="' + hash + '"]');
+            if(tabBtn) {
+                tabBtn.click();
+            }
+        }
+    });
+</script>
+
+<style>
+    .table-dark {
+        --bs-table-bg: transparent;
+        --bs-table-color: white;
+        --bs-table-hover-bg: rgba(255, 255, 255, 0.05);
+    }
+    .form-control:focus {
+        border-color: #FF9800;
+        box-shadow: 0 0 0 0.15rem rgba(255, 152, 0, 0.25);
+    }
+    .form-check-input:checked {
+        background-color: #FF9800;
+        border-color: #FF9800;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,261 @@
+{% extends 'mobile_base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .settings-container {
+        padding-bottom: 20px;
+        overflow-y: auto;
+        height: 100%;
+        scrollbar-width: none;
+        background-color: black;
+    }
+
+    .settings-container::-webkit-scrollbar {
+        display: none;
+    }
+
+    .top-appbar {
+        display: flex;
+        align-items: center;
+        padding: 15px 20px;
+        position: sticky;
+        top: 0;
+        background-color: black;
+        z-index: 100;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .back-btn {
+        color: white;
+        cursor: pointer;
+        margin-right: 20px;
+    }
+
+    .appbar-title {
+        color: white;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    .setting-item {
+        padding: 14px 16px;
+        background-color: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        margin: 15px;
+        cursor: pointer;
+    }
+
+    .setting-item:active {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .setting-item .material-symbols-outlined {
+        color: white;
+        margin-right: 15px;
+    }
+
+    .setting-text {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .setting-title {
+        color: white;
+        font-weight: 600;
+        font-size: 1rem;
+    }
+
+    .setting-subtitle {
+        color: rgba(255, 255, 255, 0.54);
+        font-size: 0.85rem;
+        margin-top: 4px;
+    }
+
+    /* Toggle Switch */
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 44px;
+        height: 24px;
+    }
+
+    .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #555;
+        transition: .4s;
+        border-radius: 24px;
+    }
+
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+
+    input:checked+.slider {
+        background-color: #448AFF;
+        /* blueAccent */
+    }
+
+    input:checked+.slider:before {
+        transform: translateX(20px);
+    }
+
+    .footer-text {
+        color: rgba(255, 255, 255, 0.54);
+        font-size: 0.75rem;
+        text-align: center;
+        margin: 30px 40px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="settings-container">
+    <div class="top-appbar">
+        <span class="material-symbols-outlined back-btn" onclick="window.history.back()">arrow_back</span>
+        <span class="appbar-title">Privacy</span>
+    </div>
+
+    <!-- Account Privacy -->
+    <div class="setting-item">
+        <div class="setting-text">
+            <span class="setting-title">Private Account</span>
+            <span class="setting-subtitle">Only people you approve can follow you</span>
+        </div>
+        <label class="switch">
+            <input type="checkbox" data-field="is_private_account" {% if privacy.is_private_account %}checked{% endif
+                %}>
+            <span class="slider"></span>
+        </label>
+    </div>
+
+    <!-- Comments -->
+    <div class="setting-item">
+        <div class="setting-text">
+            <span class="setting-title">Allow Comments</span>
+            <span class="setting-subtitle">Control who can comment on your videos</span>
+        </div>
+        <label class="switch">
+            <input type="checkbox" data-field="allow_comments" {% if privacy.allow_comments %}checked{% endif %}>
+            <span class="slider"></span>
+        </label>
+    </div>
+
+    <!-- Duet / Stitch -->
+    <div class="setting-item">
+        <div class="setting-text">
+            <span class="setting-title">Allow Duet & Stitch</span>
+            <span class="setting-subtitle">Others can remix your videos</span>
+        </div>
+        <label class="switch">
+            <input type="checkbox" data-field="allow_duet" {% if privacy.allow_duet %}checked{% endif %}>
+            <span class="slider"></span>
+        </label>
+    </div>
+
+    <!-- Downloads -->
+    <div class="setting-item">
+        <div class="setting-text">
+            <span class="setting-title">Allow Downloads</span>
+            <span class="setting-subtitle">Others can download your videos</span>
+        </div>
+        <label class="switch">
+            <input type="checkbox" data-field="allow_download" {% if privacy.allow_download %}checked{% endif %}>
+            <span class="slider"></span>
+        </label>
+    </div>
+
+    <!-- Blocked Users -->
+    <div class="setting-item" onclick="alert('Coming soon!')">
+        <span class="material-symbols-outlined">block</span>
+        <div class="setting-text">
+            <span class="setting-title">Blocked Users</span>
+            <span class="setting-subtitle">Manage blocked accounts</span>
+        </div>
+        <span class="material-symbols-outlined"
+            style="margin-right: 0; color: rgba(255,255,255,0.38);">chevron_right</span>
+    </div>
+
+    <!-- Personal Data & Activity -->
+    <div class="setting-item" onclick="alert('Coming soon!')">
+        <span class="material-symbols-outlined">lock_outline</span>
+        <div class="setting-text">
+            <span class="setting-title">Personal Data & Activity</span>
+            <span class="setting-subtitle">Manage your data and activity</span>
+        </div>
+        <span class="material-symbols-outlined"
+            style="margin-right: 0; color: rgba(255,255,255,0.38);">chevron_right</span>
+    </div>
+
+    <div class="footer-text">
+        Your privacy settings control who can see your content and interact with you.
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const toggles = document.querySelectorAll('.switch input[type="checkbox"]');
+
+        toggles.forEach(toggle => {
+            toggle.addEventListener('change', function () {
+                const field = this.dataset.field;
+                const value = this.checked;
+
+                const formData = new FormData();
+                formData.append('field', field);
+                formData.append('value', value);
+
+                // Get CSRF Token from cookies (if doing via standard forms, but here we can just pass it directly if we had a tag, or use fetch with credentials if exempt)
+                fetch('{% url "userprivacy" %}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: formData
+                }).then(response => response.json())
+                    .then(data => console.log('Update:', data))
+                    .catch(err => console.error('Error updating privacy:', err));
+            });
+        });
+
+        // Helper to get CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    });
+</script>
+{% endblock %}
