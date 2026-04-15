@@ -35,6 +35,8 @@ DEBUG = os.environ.get("DEBUG", "True") == "True"
 
 ALLOWED_HOSTS = [
     "livkit.onrender.com",
+    ".vercel.app",
+    os.environ.get("VERCEL_URL", ""),
     "localhost",
     "127.0.0.1",
     "testserver",
