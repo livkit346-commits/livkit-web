@@ -177,7 +177,7 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'  # Required for collectstatic on Render
 STATICFILES_DIRS = [
-    FRONTEND_DIR / "static"
+    BASE_DIR / "assets"
 ]
 
 MEDIA_URL = '/media/'
@@ -239,14 +239,21 @@ ASGI_APPLICATION = "backend.asgi.application"
 
 REDIS_URL = os.environ.get("REDIS_URL")
 
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [REDIS_URL],
+if REDIS_URL:
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {
+                "hosts": [REDIS_URL],
+            },
         },
-    },
-}
+    }
+else:
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels.layers.InMemoryChannelLayer",
+        },
+    }
 
 CELERY_BROKER_URL = REDIS_URL
 
