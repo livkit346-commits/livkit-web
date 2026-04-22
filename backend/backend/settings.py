@@ -180,6 +180,10 @@ STATICFILES_DIRS = [
     BASE_DIR / "assets"
 ]
 
+# Tell Whitenoise to serve files directly from STATICFILES_DIRS on Vercel
+WHITENOISE_USE_FINDERS = True
+WHITENOISE_AUTOREFRESH = True
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / "media"
 
